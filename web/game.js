@@ -14,6 +14,12 @@ const DASH_DURATION = 0.18;
 const DASH_COOLDOWN = 1.1;
 const DRONE_SPAWN_INTERVAL = 18;
 const DRONE_WARNING_TIME = 3;
+const POWERUP_TYPES = ["magnet", "slow", "boost"];
+const POWERUP_DURATIONS = Object.freeze({
+  magnet: 8,
+  slow: 5,
+  boost: 6,
+});
 const SAVE_COUNT = 3;
 const LOCAL_LEADERBOARD_KEY = "kosmische-koerier-leaderboard-v2";
 const LEGACY_LOCAL_LEADERBOARD_KEY = "kosmische-koerier-leaderboard";
@@ -72,6 +78,10 @@ class GameState {
     this.health = 3;
     this.shieldCharges = 0;
     this.shieldPickup = null;
+    this.powerups = [];
+    this.magnetTime = 0;
+    this.slowTime = 0;
+    this.boostTime = 0;
     this.elapsed = 0;
     this.pendingDroneSpawn = null;
     this.droneArrowSpawn = null;
@@ -84,6 +94,7 @@ class GameState {
     this.spawnCrystals(this.crystalSpawnCount);
     this.spawnDrone();
     this.spawnShieldPickup();
+    this.spawnPowerups();
   }
 
   get crystalGoal() {
@@ -243,8 +254,7 @@ class GameState {
     }
   }
 
-  spawnShieldPickup() {
-    this.shieldPickup = null;
+  findPickupPosition() {
     for (let attempt = 0; attempt < 100; attempt += 1) {
       const x = 48 + Math.floor(Math.random() * (WIDTH - 96));
       const y = FIELD_TOP + 28
@@ -253,11 +263,41 @@ class GameState {
         distance(x, y, ...this.player) > 130
         && distance(x, y, ...this.portal) > 110
         && this.crystals.every((crystal) => distance(x, y, ...crystal) > 40)
+        && this.drones.every((drone) => distance(x, y, ...drone) > 48)
+        && (!this.shieldPickup || distance(x, y, ...this.shieldPickup) > 44)
+        && this.powerups.every((pickup) =>
+          distance(x, y, ...pickup.position) > 44
+        )
         && !this.overlapsWall(x, y, 12)
       ) {
-        this.shieldPickup = [x, y];
-        return;
+        return [x, y];
       }
+    }
+    return null;
+  }
+
+  spawnShieldPickup() {
+    this.shieldPickup = null;
+    this.shieldPickup = this.findPickupPosition();
+  }
+
+  spawnPowerups() {
+    this.powerups = [];
+    for (const type of POWERUP_TYPES) {
+      const position = this.findPickupPosition();
+      if (position) {
+        this.powerups.push({ type, position });
+      }
+    }
+  }
+
+  activatePowerup(type) {
+    if (type === "magnet") {
+      this.magnetTime = POWERUP_DURATIONS.magnet;
+    } else if (type === "slow") {
+      this.slowTime = POWERUP_DURATIONS.slow;
+    } else if (type === "boost") {
+      this.boostTime = POWERUP_DURATIONS.boost;
     }
   }
 
@@ -294,6 +334,10 @@ class GameState {
     this.drones = [];
     this.collected = 0;
     this.elapsed = 0;
+    this.powerups = [];
+    this.magnetTime = 0;
+    this.slowTime = 0;
+    this.boostTime = 0;
     this.pendingDroneSpawn = null;
     this.droneArrowSpawn = null;
     this.droneArrowTime = 0;
@@ -306,6 +350,7 @@ class GameState {
     this.spawnCrystals(this.crystalSpawnCount);
     this.spawnDrone();
     this.spawnShieldPickup();
+    this.spawnPowerups();
   }
 
   step(dt, directions, dash, joystickDirection = null) {
@@ -321,6 +366,9 @@ class GameState {
     this.invulnerable = Math.max(0, this.invulnerable - dt);
     this.dashCooldown = Math.max(0, this.dashCooldown - dt);
     this.dashTime = Math.max(0, this.dashTime - dt);
+    this.magnetTime = Math.max(0, this.magnetTime - dt);
+    this.slowTime = Math.max(0, this.slowTime - dt);
+    this.boostTime = Math.max(0, this.boostTime - dt);
     if (dash && this.dashCooldown === 0) {
       this.dashTime = DASH_DURATION;
       this.dashCooldown = DASH_COOLDOWN;
@@ -340,7 +388,11 @@ class GameState {
     if (dx || dy) {
       const magnitude = Math.hypot(dx, dy);
       this.playerDirection = [dx / magnitude, dy / magnitude];
-      const speed = PLAYER_SPEED * (this.dashTime ? 2.35 : 1) * movementScale;
+      const speedMultiplier = Math.min(
+        (this.dashTime ? 2.35 : 1) * (this.boostTime ? 1.4 : 1),
+        2.7,
+      );
+      const speed = PLAYER_SPEED * speedMultiplier * movementScale;
       const moveX = dx / magnitude * speed * dt;
       const moveY = dy / magnitude * speed * dt;
       if (!this.overlapsWall(this.player[0] + moveX, this.player[1], 20)) {
@@ -356,12 +408,34 @@ class GameState {
       FIELD_BOTTOM - 12,
     );
 
+    if (this.magnetTime > 0) {
+      for (const crystal of this.crystals) {
+        const dx = this.player[0] - crystal[0];
+        const dy = this.player[1] - crystal[1];
+        const crystalDistance = Math.hypot(dx, dy);
+        if (
+          crystalDistance > 27
+          && crystalDistance < 190
+          && !this.segmentHitsWall(crystal, this.player, 12)
+        ) {
+          const pullDistance = Math.min(280 * dt, crystalDistance - 26);
+          crystal[0] += dx / crystalDistance * pullDistance;
+          crystal[1] += dy / crystalDistance * pullDistance;
+        }
+      }
+    }
     for (const crystal of [...this.crystals]) {
       if (distance(...this.player, ...crystal) < 27) {
         this.crystals.splice(this.crystals.indexOf(crystal), 1);
         this.collected += 1;
         this.totalCrystals += 1;
         this.spawnCrystals();
+      }
+    }
+    for (const pickup of [...this.powerups]) {
+      if (distance(...this.player, ...pickup.position) < 29) {
+        this.powerups.splice(this.powerups.indexOf(pickup), 1);
+        this.activatePowerup(pickup.type);
       }
     }
     if (
@@ -406,7 +480,8 @@ class GameState {
         steerY += awayY * strength;
       }
       const steeringLength = Math.max(Math.hypot(steerX, steerY), 1);
-      const movement = Math.min(DRONE_SPEED * dt, steeringLength);
+      const droneSpeed = DRONE_SPEED * (this.slowTime > 0 ? 0.35 : 1);
+      const movement = Math.min(droneSpeed * dt, steeringLength);
       const moveX = steerX / steeringLength * movement;
       const moveY = steerY / steeringLength * movement;
       if (!this.overlapsWall(drone[0] + moveX, drone[1], 14)) {
@@ -485,6 +560,10 @@ class GameState {
       health: this.health,
       shieldCharges: this.shieldCharges,
       shieldPickup: this.shieldPickup,
+      powerups: this.powerups,
+      magnetTime: this.magnetTime,
+      slowTime: this.slowTime,
+      boostTime: this.boostTime,
       elapsed: this.elapsed,
       invulnerable: this.invulnerable,
       dashCooldown: this.dashCooldown,
@@ -559,6 +638,13 @@ class GameState {
     if (!Array.isArray(data.drones) || data.drones.length > 5) {
       throw new Error("De opgeslagen drones zijn ongeldig.");
     }
+    const savedPowerups = data.powerups ?? [];
+    if (
+      !Array.isArray(savedPowerups)
+      || savedPowerups.length > POWERUP_TYPES.length
+    ) {
+      throw new Error("De opgeslagen power-ups zijn ongeldig.");
+    }
     const crystals = data.crystals.map((point) =>
       validatePosition(point, "kristal", 12)
     );
@@ -568,13 +654,35 @@ class GameState {
     const shieldPickup = data.shieldPickup == null
       ? null
       : validatePosition(data.shieldPickup, "schild", 12);
-    for (const point of [...crystals, ...drones, ...(shieldPickup ? [shieldPickup] : [])]) {
+    const powerups = savedPowerups.map((pickup) => {
+      if (
+        !pickup
+        || typeof pickup !== "object"
+        || Array.isArray(pickup)
+        || !POWERUP_TYPES.includes(pickup.type)
+      ) {
+        throw new Error("Een opgeslagen power-up is ongeldig.");
+      }
+      return {
+        type: pickup.type,
+        position: validatePosition(pickup.position, `power-up ${pickup.type}`, 12),
+      };
+    });
+    if (new Set(powerups.map((pickup) => pickup.type)).size !== powerups.length) {
+      throw new Error("De opgeslagen power-ups bevatten dubbele items.");
+    }
+    for (const point of [
+      ...crystals,
+      ...drones,
+      ...(shieldPickup ? [shieldPickup] : []),
+      ...powerups.map((pickup) => pickup.position),
+    ]) {
       if (point[0] < 0 || point[0] > WIDTH || point[1] < 0 || point[1] > HEIGHT) {
         throw new Error("Een opgeslagen object staat buiten het speelveld.");
       }
     }
-    const timer = (name, maximum = Infinity) => {
-      const value = data[name];
+    const timer = (name, maximum = Infinity, fallback) => {
+      const value = data[name] ?? fallback;
       if (typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > maximum) {
         throw new Error(`De opgeslagen tijd (${name}) is ongeldig.`);
       }
@@ -584,6 +692,9 @@ class GameState {
     const invulnerable = timer("invulnerable", 1.2);
     const dashCooldown = timer("dashCooldown", DASH_COOLDOWN);
     const dashTime = timer("dashTime", DASH_DURATION);
+    const magnetTime = timer("magnetTime", POWERUP_DURATIONS.magnet, 0);
+    const slowTime = timer("slowTime", POWERUP_DURATIONS.slow, 0);
+    const boostTime = timer("boostTime", POWERUP_DURATIONS.boost, 0);
 
     Object.assign(this, {
       level: data.level,
@@ -597,6 +708,10 @@ class GameState {
       health: data.health,
       shieldCharges,
       shieldPickup,
+      powerups,
+      magnetTime,
+      slowTime,
+      boostTime,
       elapsed,
       pendingDroneSpawn: null,
       droneArrowSpawn: null,
@@ -1020,6 +1135,7 @@ function resizeGameCanvas() {
     state.crystals.forEach(scalePosition);
     state.drones.forEach(scalePosition);
     scalePosition(state.shieldPickup);
+    state.powerups.forEach(({ position }) => scalePosition(position));
     scalePosition(state.pendingDroneSpawn?.position);
     scalePosition(state.droneArrowSpawn?.position);
     state.walls = state.levelWalls();
@@ -1081,7 +1197,11 @@ function drawMenu() {
   drawText("Een klein avontuur tussen de sterren", WIDTH / 2, 178, 15, "#aab5d0");
   drawText("Verzamel kristallen en bereik de PORTAAL", WIDTH / 2, 218, 16, "#edf0fa", "700");
   drawText("WASD / pijltjes bewegen  •  SPATIE dash  •  P pauze", WIDTH / 2, 248, 12, "#aab5d0");
-  drawText("Blauw schildkristal vangt één drone-aanval op", WIDTH / 2, 275, 11, "#63c7ff");
+  drawText("Blauw schild vangt één drone-aanval op", WIDTH / 2, 275, 11, "#63c7ff");
+  drawText(
+    "Paars = magneet  •  cyaan = tijdveld  •  oranje = boost",
+    WIDTH / 2, 291, 10, "#c2cbe0",
+  );
   drawButton(310, "NIEUW SPEL  (ENTER / N)", true);
   drawButton(356, "LOKALE TOPSCORES  (L)");
   for (let index = 0; index < SAVE_COUNT; index += 1) {
@@ -1186,6 +1306,31 @@ function drawShieldPickup(x, y) {
   context.stroke();
 }
 
+function drawPowerup(pickup) {
+  const [x, y] = pickup.position;
+  const colors = {
+    magnet: "#c084fc",
+    slow: "#65d9ff",
+    boost: "#ffb45c",
+  };
+  const symbols = { magnet: "M", slow: "T", boost: "+" };
+  const color = colors[pickup.type];
+  context.save();
+  context.shadowColor = color;
+  context.shadowBlur = 12;
+  context.strokeStyle = color;
+  context.lineWidth = 2;
+  context.beginPath();
+  context.arc(x, y, 14 + Math.sin(state.elapsed * 5) * 2, 0, Math.PI * 2);
+  context.stroke();
+  context.fillStyle = color;
+  context.beginPath();
+  context.arc(x, y, 9, 0, Math.PI * 2);
+  context.fill();
+  context.restore();
+  drawText(symbols[pickup.type], x, y, 11, "#080d1b", "700");
+}
+
 function drawDrone(x, y) {
   context.fillStyle = "#d94f73";
   context.strokeStyle = "#ff96a9";
@@ -1218,6 +1363,21 @@ function drawPlayer() {
     context.beginPath();
     context.arc(x, y, 25, 0, Math.PI * 2);
     context.stroke();
+  }
+  const activeEffectColor = state.magnetTime > 0
+    ? "#c084fc"
+    : state.slowTime > 0
+      ? "#65d9ff"
+      : state.boostTime > 0
+        ? "#ffb45c"
+        : null;
+  if (activeEffectColor) {
+    context.strokeStyle = activeEffectColor;
+    context.setLineDash([4, 4]);
+    context.beginPath();
+    context.arc(x, y, 31, 0, Math.PI * 2);
+    context.stroke();
+    context.setLineDash([]);
   }
   context.save();
   context.translate(x, y);
@@ -1326,6 +1486,14 @@ function drawArena() {
   context.fill();
   context.stroke();
   drawText("SCHILD", 304, 63, 9, shieldColor, "700", "left");
+  const activePowerups = [
+    state.magnetTime > 0 && `MAGNEET ${Math.ceil(state.magnetTime)}s`,
+    state.slowTime > 0 && `TIJDVELD ${Math.ceil(state.slowTime)}s`,
+    state.boostTime > 0 && `BOOST ${Math.ceil(state.boostTime)}s`,
+  ].filter(Boolean);
+  if (activePowerups.length) {
+    drawText(activePowerups.join("  •  "), WIDTH / 2, 80, 9, "#e5d4ff", "700");
+  }
 
   for (const [left, top, right, bottom] of state.walls) {
     roundedRect(left, top, right - left, bottom - top, 4, "#293654", "#526481");
@@ -1337,6 +1505,7 @@ function drawArena() {
   if (state.shieldPickup) {
     drawShieldPickup(...state.shieldPickup);
   }
+  state.powerups.forEach(drawPowerup);
   for (const [x, y] of state.drones) {
     drawDrone(x, y);
   }
