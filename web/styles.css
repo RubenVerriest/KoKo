@@ -288,8 +288,9 @@ kbd {
   canvas {
     width: auto;
     height: auto;
+    aspect-ratio: auto;
     max-width: 100vw;
-    max-height: calc(100dvh - 18px);
+    max-height: 100dvh;
   }
 
   .touch-controls {

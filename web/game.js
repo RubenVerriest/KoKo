@@ -1,6 +1,7 @@
 "use strict";
 
-const WIDTH = 900;
+const DEFAULT_WIDTH = 900;
+let WIDTH = DEFAULT_WIDTH;
 const HEIGHT = 620;
 const FIELD_TOP = 90;
 const FIELD_BOTTOM = HEIGHT - 24;
@@ -94,9 +95,10 @@ class GameState {
     if (level % 4 !== 0) {
       return [];
     }
+    const offset = (WIDTH - DEFAULT_WIDTH) / 2;
     return [
-      [280, 180, 310, 350],
-      [570, 340, 600, 510],
+      [280 + offset, 180, 310 + offset, 350],
+      [570 + offset, 340, 600 + offset, 510],
     ];
   }
 
@@ -464,6 +466,7 @@ class GameState {
   toJSON() {
     return {
       level: this.level,
+      width: WIDTH,
       player: this.player,
       playerDirection: this.playerDirection,
       crystals: this.crystals,
@@ -492,6 +495,16 @@ class GameState {
     if (!Number.isInteger(data.health) || data.health < 1 || data.health > 3) {
       throw new Error("Het opgeslagen aantal levens is ongeldig.");
     }
+    const savedWidth = data.width ?? DEFAULT_WIDTH;
+    if (
+      typeof savedWidth !== "number"
+      || !Number.isFinite(savedWidth)
+      || savedWidth < DEFAULT_WIDTH
+      || savedWidth > 10000
+    ) {
+      throw new Error("De opgeslagen speelveld-breedte is ongeldig.");
+    }
+    const positionScale = WIDTH / savedWidth;
     const shieldCharges = data.shieldCharges ?? 0;
     if (!Number.isInteger(shieldCharges) || shieldCharges < 0 || shieldCharges > 1) {
       throw new Error("De opgeslagen schildlading is ongeldig.");
@@ -502,6 +515,7 @@ class GameState {
         throw new Error(`Ongeldige positie voor ${label}.`);
       }
       const point = value.slice();
+      point[0] *= positionScale;
       if (this.overlapsWall(point[0], point[1], radius, walls)) {
         throw new Error(`De opgeslagen positie van ${label} ligt in een muur.`);
       }
@@ -804,6 +818,45 @@ function positionLandscapeControls() {
     "--landscape-actions-right",
     `${window.innerWidth - bounds.right + 8}px`,
   );
+}
+
+function resizeGameCanvas() {
+  const isLandscape = matchMedia(
+    "(orientation: landscape) and (max-width: 1200px)",
+  ).matches;
+  const nextWidth = isLandscape
+    ? Math.max(DEFAULT_WIDTH, HEIGHT * window.innerWidth / window.innerHeight)
+    : DEFAULT_WIDTH;
+  if (Math.abs(nextWidth - WIDTH) >= 0.1) {
+    const scaleX = nextWidth / WIDTH;
+    WIDTH = nextWidth;
+    for (const star of stars) {
+      star.x *= scaleX;
+    }
+
+    const scalePosition = (position) => {
+      if (position) {
+        position[0] *= scaleX;
+      }
+    };
+    scalePosition(state.player);
+    state.playerDirection[0] *= scaleX;
+    const directionLength = Math.hypot(...state.playerDirection);
+    state.playerDirection = state.playerDirection.map((value) =>
+      value / directionLength
+    );
+    state.crystals.forEach(scalePosition);
+    state.drones.forEach(scalePosition);
+    scalePosition(state.shieldPickup);
+    scalePosition(state.pendingDroneSpawn?.position);
+    scalePosition(state.droneArrowSpawn?.position);
+    state.walls = state.levelWalls();
+
+    canvas.width = Math.round(WIDTH * pixelRatio);
+    canvas.height = HEIGHT * pixelRatio;
+    context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+  }
+  positionLandscapeControls();
 }
 
 function drawText(text, x, y, size, color, weight = "normal", align = "center") {
@@ -1168,8 +1221,8 @@ function frame(timestamp) {
 window.addEventListener("keydown", onKeyDown);
 window.addEventListener("keyup", onKeyUp);
 window.addEventListener("blur", clearMovementInput);
-window.addEventListener("resize", positionLandscapeControls);
-window.addEventListener("orientationchange", positionLandscapeControls);
+window.addEventListener("resize", resizeGameCanvas);
+window.addEventListener("orientationchange", resizeGameCanvas);
 canvas.addEventListener("click", onCanvasClick);
 joystick.addEventListener("pointerdown", (event) => {
   event.preventDefault();
@@ -1230,7 +1283,7 @@ nextLevelButton.addEventListener("click", () => {
   }
 });
 readSaveSlots();
-positionLandscapeControls();
+resizeGameCanvas();
 requestAnimationFrame(frame);
 
 if ("serviceWorker" in navigator) {
