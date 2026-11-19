@@ -27,7 +27,7 @@ Verzamel genoeg kristallen om het portaal te activeren en ontwijk ondertussen de
 
 ### Functies
 
-- Speelbaar op desktop en telefoon; de geïnstalleerde webapp opent in een normale appweergave en volgt de schermoriëntatie van je toestel.
+- Speelbaar op desktop en telefoon; de geïnstalleerde webapp opent in liggende stand en de browsergame past zich aan de schermoriëntatie aan.
 - Joystick, dash-, pauze- en opslagbediening voor touchscreens.
 - Drie lokale opslagplaatsen om een spel later verder te spelen.
 - Lokale top 10 met **100 punten per kristal**, inclusief kristallen uit eerder behaalde levels.
