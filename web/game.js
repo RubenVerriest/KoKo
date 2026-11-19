@@ -15,6 +15,8 @@ const DASH_COOLDOWN = 1.1;
 const DRONE_SPAWN_INTERVAL = 18;
 const DRONE_WARNING_TIME = 3;
 const SAVE_COUNT = 3;
+const LOCAL_LEADERBOARD_KEY = "kosmische-koerier-leaderboard";
+const LOCAL_LEADERBOARD_SIZE = 10;
 const canvas = document.querySelector("#game");
 const context = canvas.getContext("2d");
 const joystick = document.querySelector("#joystick");
@@ -38,6 +40,7 @@ context.scale(pixelRatio, pixelRatio);
 
 let notice = "";
 let saveSlots = Array(SAVE_COUNT).fill(null);
+let localScores = [];
 
 function distance(x1, y1, x2, y2) {
   return Math.hypot(x2 - x1, y2 - y1);
@@ -68,6 +71,7 @@ class GameState {
     this.shieldCharges = 0;
     this.shieldPickup = null;
     this.elapsed = 0;
+    this.runTime = 0;
     this.pendingDroneSpawn = null;
     this.droneArrowSpawn = null;
     this.droneArrowTime = 0;
@@ -75,6 +79,7 @@ class GameState {
     this.dashCooldown = 0;
     this.dashTime = 0;
     this.screen = "playing";
+    this.resultRecorded = false;
     this.spawnCrystals(this.crystalSpawnCount);
     this.spawnDrone();
     this.spawnShieldPickup();
@@ -296,6 +301,7 @@ class GameState {
     this.dashTime = 0;
     this.shieldCharges = 0;
     this.screen = "playing";
+    this.resultRecorded = false;
     this.spawnCrystals(this.crystalSpawnCount);
     this.spawnDrone();
     this.spawnShieldPickup();
@@ -307,6 +313,7 @@ class GameState {
     }
     dt = Math.min(dt, 0.05);
     this.elapsed += dt;
+    this.runTime += dt;
     this.droneArrowTime = Math.max(0, this.droneArrowTime - dt);
     if (this.droneArrowTime === 0) {
       this.droneArrowSpawn = null;
@@ -477,6 +484,7 @@ class GameState {
       shieldCharges: this.shieldCharges,
       shieldPickup: this.shieldPickup,
       elapsed: this.elapsed,
+      runTime: this.runTime,
       invulnerable: this.invulnerable,
       dashCooldown: this.dashCooldown,
       dashTime: this.dashTime,
@@ -563,6 +571,7 @@ class GameState {
       return value;
     };
     const elapsed = timer("elapsed");
+    const runTime = data.runTime === undefined ? 0 : timer("runTime");
     const invulnerable = timer("invulnerable", 1.2);
     const dashCooldown = timer("dashCooldown", DASH_COOLDOWN);
     const dashTime = timer("dashTime", DASH_DURATION);
@@ -579,12 +588,14 @@ class GameState {
       shieldCharges,
       shieldPickup,
       elapsed,
+      runTime,
       pendingDroneSpawn: null,
       droneArrowSpawn: null,
       droneArrowTime: 0,
       invulnerable,
       dashCooldown,
       dashTime,
+      resultRecorded: false,
       screen: "playing",
     });
   }
@@ -608,6 +619,76 @@ function readSaveSlots() {
       saveSlots[index] = null;
       notice = `Slot ${index + 1} kon niet worden gelezen: ${error.message}`;
     }
+  }
+}
+
+function readLocalScores() {
+  try {
+    const raw = localStorage.getItem(LOCAL_LEADERBOARD_KEY);
+    if (!raw) {
+      localScores = [];
+      return;
+    }
+    const entries = JSON.parse(raw);
+    if (!Array.isArray(entries) || entries.length > LOCAL_LEADERBOARD_SIZE) {
+      throw new Error("De lokale ranglijst is ongeldig.");
+    }
+    localScores = entries.map((entry) => {
+      if (
+        !entry
+        || !Number.isInteger(entry.score)
+        || entry.score < 0
+        || !Number.isInteger(entry.level)
+        || entry.level < 1
+        || !Number.isInteger(entry.crystals)
+        || entry.crystals < 0
+        || typeof entry.duration !== "number"
+        || !Number.isFinite(entry.duration)
+        || entry.duration < 0
+        || typeof entry.completed !== "boolean"
+        || typeof entry.date !== "string"
+        || !Number.isFinite(Date.parse(entry.date))
+      ) {
+        throw new Error("Een score in de lokale ranglijst is ongeldig.");
+      }
+      return entry;
+    });
+  } catch (error) {
+    localScores = [];
+    notice = `Lokale ranglijst kon niet worden gelezen: ${error.message}`;
+  }
+}
+
+function recordLocalScore() {
+  if (
+    state.resultRecorded
+    || !["over", "won"].includes(state.screen)
+  ) {
+    return;
+  }
+  state.resultRecorded = true;
+  const completed = state.screen === "won";
+  const crystals = Math.min(state.collected, state.crystalGoal);
+  const score = state.level * 1000 + crystals * 100 + (completed ? 500 : 0);
+  const entry = {
+    score,
+    level: state.level,
+    crystals,
+    duration: state.runTime,
+    completed,
+    date: new Date().toISOString(),
+  };
+  const sortedScores = [...localScores, entry].sort((first, second) =>
+    second.score - first.score
+    || first.duration - second.duration
+    || Date.parse(first.date) - Date.parse(second.date)
+  ).slice(0, LOCAL_LEADERBOARD_SIZE);
+  try {
+    localStorage.setItem(LOCAL_LEADERBOARD_KEY, JSON.stringify(sortedScores));
+    localScores = sortedScores;
+    notice = "Prestatie opgeslagen in de lokale ranglijst.";
+  } catch (error) {
+    notice = `Score opslaan is mislukt: ${error.message}`;
   }
 }
 
@@ -653,11 +734,19 @@ function onKeyDown(event) {
   if (["arrowleft", "arrowright", "arrowup", "arrowdown", " "].includes(key)) {
     event.preventDefault();
   }
+  if (state.screen === "leaderboard") {
+    if (["escape", "enter", "l"].includes(key)) {
+      state.screen = "menu";
+    }
+    return;
+  }
   if (state.screen === "menu") {
     if (["enter", "n"].includes(key)) {
       startGame();
     } else if (["1", "2", "3"].includes(key)) {
       loadSlot(Number(key) - 1);
+    } else if (key === "l") {
+      state.screen = "leaderboard";
     }
     return;
   }
@@ -742,13 +831,20 @@ function onCanvasClick(event) {
   if (state.screen === "menu") {
     if (
       x >= buttonLeft && x <= buttonLeft + MENU_BUTTON_WIDTH
-      && y >= 390 && y <= 430
+      && y >= 310 && y <= 352
     ) {
       startGame();
       return;
     }
+    if (
+      x >= buttonLeft && x <= buttonLeft + MENU_BUTTON_WIDTH
+      && y >= 356 && y <= 398
+    ) {
+      state.screen = "leaderboard";
+      return;
+    }
     for (let index = 0; index < SAVE_COUNT; index += 1) {
-      const top = 440 + index * 46;
+      const top = 402 + index * 46;
       if (
         x >= buttonLeft && x <= buttonLeft + MENU_BUTTON_WIDTH
         && y >= top && y <= top + 42
@@ -757,6 +853,12 @@ function onCanvasClick(event) {
         return;
       }
     }
+  } else if (
+    state.screen === "leaderboard"
+    && x >= buttonLeft && x <= buttonLeft + MENU_BUTTON_WIDTH
+    && y >= 556 && y <= 598
+  ) {
+    state.screen = "menu";
   } else if (state.screen === "saving") {
     for (let index = 0; index < SAVE_COUNT; index += 1) {
       const top = 365 + index * 47;
@@ -928,24 +1030,65 @@ function drawButton(y, label, active = false) {
 
 function drawMenu() {
   drawStars();
-  drawText("KOSMISCHE", WIDTH / 2, 118, 22, "#75e6d1", "700");
-  drawText("KOERIER", WIDTH / 2, 177, 48, "#f3f5ff", "700");
-  drawText("Een klein avontuur tussen de sterren", WIDTH / 2, 226, 15, "#aab5d0");
-  drawText("Verzamel kristallen en bereik de PORTAAL", WIDTH / 2, 270, 17, "#edf0fa", "700");
-  drawText("WASD / pijltjes bewegen  •  SPATIE dash  •  P pauze", WIDTH / 2, 310, 13, "#aab5d0");
-  drawText("Blauw schildkristal vangt één drone-aanval op", WIDTH / 2, 337, 12, "#63c7ff");
-  drawButton(390, "NIEUW SPEL  (ENTER / N)", true);
+  drawText("KOSMISCHE", WIDTH / 2, 78, 22, "#75e6d1", "700");
+  drawText("KOERIER", WIDTH / 2, 128, 46, "#f3f5ff", "700");
+  drawText("Een klein avontuur tussen de sterren", WIDTH / 2, 178, 15, "#aab5d0");
+  drawText("Verzamel kristallen en bereik de PORTAAL", WIDTH / 2, 218, 16, "#edf0fa", "700");
+  drawText("WASD / pijltjes bewegen  •  SPATIE dash  •  P pauze", WIDTH / 2, 248, 12, "#aab5d0");
+  drawText("Blauw schildkristal vangt één drone-aanval op", WIDTH / 2, 275, 11, "#63c7ff");
+  drawButton(310, "NIEUW SPEL  (ENTER / N)", true);
+  drawButton(356, "LOKALE TOPSCORES  (L)");
   for (let index = 0; index < SAVE_COUNT; index += 1) {
     const slot = saveSlots[index];
     const label = slot
       ? `LAAD SLOT ${index + 1}  •  LEVEL ${slot.level ?? "?"}  •  ${slot.collected ?? "?"} KRISTALLEN`
       : `LAAD SLOT ${index + 1}  •  LEEG`;
-    drawButton(440 + index * 46, label);
+    drawButton(402 + index * 46, label);
   }
-  drawText("Klik op een slot of druk op 1, 2 of 3 om te laden.", WIDTH / 2, 590, 11, "#73809d");
+  drawText("Klik op een slot of druk op 1, 2 of 3 om te laden.", WIDTH / 2, 560, 11, "#73809d");
   if (notice) {
-    drawText(notice, WIDTH / 2, 610, 10, "#ffb5bd");
+    drawText(notice, WIDTH / 2, 602, 10, "#ffb5bd");
   }
+}
+
+function formatRunTime(seconds) {
+  const totalSeconds = Math.floor(seconds);
+  const minutes = Math.floor(totalSeconds / 60);
+  const remainder = String(totalSeconds % 60).padStart(2, "0");
+  return `${minutes}:${remainder}`;
+}
+
+function drawLocalLeaderboard() {
+  drawStars();
+  drawText("LOKALE TOPSCORES", WIDTH / 2, 106, 28, "#75e6d1", "700");
+  drawText("Alleen opgeslagen op dit apparaat", WIDTH / 2, 148, 14, "#aab5d0");
+  drawText(
+    "Score: 1000 per level + 100 per kristal + 500 voor een gehaald level",
+    WIDTH / 2, 178, 11, "#73809d",
+  );
+  const left = (WIDTH - MENU_BUTTON_WIDTH) / 2;
+  const right = left + MENU_BUTTON_WIDTH;
+  drawText("RANG  •  LEVEL  •  KRISTALLEN  •  TIJD", left + 10, 214, 10, "#aab5d0", "700", "left");
+  drawText("SCORE", right - 10, 214, 10, "#aab5d0", "700", "right");
+
+  if (localScores.length === 0) {
+    drawText("Speel een ronde om je eerste score te zetten.", WIDTH / 2, 330, 14, "#edf0fa");
+  } else {
+    localScores.forEach((entry, index) => {
+      const y = 244 + index * 30;
+      roundedRect(left, y - 12, MENU_BUTTON_WIDTH, 25, 5, "#10182b", "#293653");
+      drawText(
+        `${String(index + 1).padStart(2, "0")}  •  LEVEL ${entry.level}  •  ${entry.crystals} KRISTALLEN  •  ${formatRunTime(entry.duration)}${entry.completed ? "  •  GEHAALD" : ""}`,
+        left + 10, y, 10, index === 0 ? "#f2d47b" : "#edf0fa", "700", "left",
+      );
+      drawText(String(entry.score), right - 10, y, 11, "#75e6d1", "700", "right");
+    });
+  }
+  if (notice) {
+    drawText(notice, WIDTH / 2, 535, 10, "#ffb5bd");
+  }
+  drawButton(556, "TERUG  (ESC / ENTER / L)");
+  drawText("Deze scores worden niet online gedeeld.", WIDTH / 2, 610, 10, "#73809d");
 }
 
 function drawPortal() {
@@ -1214,6 +1357,10 @@ function draw() {
     drawMenu();
     return;
   }
+  if (state.screen === "leaderboard") {
+    drawLocalLeaderboard();
+    return;
+  }
   drawArena();
   if (state.screen === "saving") {
     drawSavingMenu();
@@ -1238,6 +1385,7 @@ function frame(timestamp) {
     : Math.min((timestamp - frame.lastTime) / 1000, 0.05);
   frame.lastTime = timestamp;
   state.step(dt, pressedKeys, pressedKeys.has("dash"), joystickInput);
+  recordLocalScore();
   syncTouchButtons();
   draw();
   requestAnimationFrame(frame);
@@ -1310,6 +1458,7 @@ nextLevelButton.addEventListener("click", () => {
   }
 });
 readSaveSlots();
+readLocalScores();
 resizeGameCanvas();
 requestAnimationFrame(frame);
 

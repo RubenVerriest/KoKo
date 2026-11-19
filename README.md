@@ -11,6 +11,10 @@ Op een telefoon vervangt een sleepbare joystick de toetsenbesturing. De knoppen
 **DASH**, **PAUZE** en **OPSLAAN** staan ernaast; opslaan gebruikt dezelfde drie
 browseropslagslots als de desktopversie.
 
+De lokale topscores worden alleen op het gebruikte apparaat bewaard. Ze worden
+niet online gedeeld en vormen dus geen wereldwijde, landelijke of
+vriendengroep-ranglijst.
+
 ## Lokaal bekijken
 
 Open `index.html` in een recente browser. Voor een lokale webserver kun je in deze map uitvoeren:
