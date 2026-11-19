@@ -1475,15 +1475,3 @@ readSaveSlots();
 readLocalScores();
 resizeGameCanvas();
 requestAnimationFrame(frame);
-
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js", {
-      updateViaCache: "none",
-    })
-      .then((registration) => registration.update())
-      .catch((error) => {
-        console.error("De offlinecache kon niet worden bijgewerkt.", error);
-      });
-  });
-}

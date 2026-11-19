@@ -2,10 +2,9 @@
 
 Dit is een zelfstandige HTML5/JavaScript-versie van de Tkinter-game. Er zijn geen Python-packages, buildstappen of Buildozer nodig. De drie opslagslots worden lokaal in de browser bewaard.
 
-De site heeft ook een PWA-manifest en service worker. Op een beveiligde website
-(HTTPS; `localhost` werkt voor testen) kan een ondersteunde browser de game
-installeren en de spelbestanden voor offline gebruik cachen. Na een update kan
-de browser de oude cache nog één keer gebruiken; laad de pagina daarna opnieuw.
+De site heeft een PWA-manifest en service worker. Op HTTPS (of `localhost` voor
+testen) kan Chrome de game installeren. Appbestanden worden netwerk-eerst
+geladen; de cache is alleen de offline terugval.
 
 Op een telefoon vervangt een sleepbare joystick de toetsenbesturing. De knoppen
 **DASH**, **PAUZE** en **OPSLAAN** staan ernaast; opslaan gebruikt dezelfde drie
@@ -33,11 +32,15 @@ website in `web/`.
 
 ## Installeren als Android-app
 
-Open de gepubliceerde website in Chrome en kies **Menu → App installeren**.
-Gebruik niet alleen **Toevoegen aan startscherm**; dat maakt een snelkoppeling
-die de appnaam, fullscreen-weergave en landscape-oriëntatie mogelijk niet
-overneemt. Verwijder na een update de oude installatie en installeer de app
-opnieuw als Chrome de nieuwe naam of weergave niet toepast.
+Open `https://rubenverriest.github.io/KoKo/web/` in Chrome. Als Chrome de app
+installatiegeschikt vindt, verschijnt **Installeer KoKo**; anders kun je
+Chrome-menu → **App installeren** gebruiken. Kies niet alleen **Toevoegen aan
+startscherm**, want dat kan een gewone snelkoppeling maken.
+
+Na een update open je de website eerst online in Chrome en vernieuw je de
+pagina. Als de bestaande app nog oude bestanden start, verwijder die installatie
+en installeer KoKo opnieuw. Het wissen van sitegegevens is een laatste optie:
+dat verwijdert ook lokale spelopslagen en topscores.
 
 ## Gratis publiceren met Cloudflare Pages
 

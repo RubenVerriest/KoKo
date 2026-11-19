@@ -18,6 +18,50 @@ body {
     radial-gradient(ellipse at 50% 0, #182544 0, #0b1122 42rem, #080d1b 75rem);
 }
 
+.install-prompt {
+  position: fixed;
+  z-index: 5;
+  top: max(8px, env(safe-area-inset-top, 0px));
+  right: max(8px, env(safe-area-inset-right, 0px));
+  display: grid;
+  justify-items: end;
+  gap: 6px;
+  pointer-events: none;
+}
+
+#install-app-button {
+  padding: 10px 14px;
+  border: 1px solid #75e6d1;
+  border-radius: 10px;
+  background: #173c48;
+  color: #e8f4ff;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  pointer-events: auto;
+}
+
+#install-app-button:disabled {
+  opacity: 0.65;
+}
+
+#install-status {
+  max-width: min(320px, calc(100vw - 16px));
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid #39445f;
+  border-radius: 8px;
+  background: #0c1325;
+  color: #c2cbe0;
+  font-size: 0.8rem;
+  pointer-events: auto;
+}
+
+#install-app-button[hidden],
+#install-status[hidden] {
+  display: none;
+}
+
 .site {
   width: min(100% - 28px, 960px);
   margin: 0 auto;
@@ -257,6 +301,12 @@ kbd {
 
 @media (orientation: landscape) and (any-pointer: coarse),
   (orientation: landscape) and (max-width: 1200px) {
+  .install-prompt {
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
   .site {
     display: grid;
     width: 100%;
