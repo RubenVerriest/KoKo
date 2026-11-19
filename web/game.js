@@ -823,6 +823,9 @@ function syncTouchButtons() {
 
 function positionLandscapeControls() {
   const bounds = canvas.getBoundingClientRect();
+  if (!bounds.width || !bounds.height) {
+    return;
+  }
   const scale = bounds.height / HEIGHT;
   document.documentElement.style.setProperty(
     "--landscape-actions-top",
@@ -835,11 +838,18 @@ function positionLandscapeControls() {
 }
 
 function resizeGameCanvas() {
-  const isLandscape = matchMedia(
-    "(orientation: landscape) and (max-width: 1200px)",
-  ).matches;
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  if (!viewportWidth || !viewportHeight) {
+    return;
+  }
+  const isLandscape = matchMedia("(orientation: landscape)").matches
+    && (
+      matchMedia("(any-pointer: coarse)").matches
+      || viewportWidth <= 1200
+    );
   const nextWidth = isLandscape
-    ? Math.max(DEFAULT_WIDTH, HEIGHT * window.innerWidth / window.innerHeight)
+    ? Math.max(DEFAULT_WIDTH, HEIGHT * viewportWidth / viewportHeight)
     : DEFAULT_WIDTH;
   if (Math.abs(nextWidth - WIDTH) >= 0.1) {
     const scaleX = nextWidth / WIDTH;
@@ -1238,6 +1248,8 @@ window.addEventListener("keyup", onKeyUp);
 window.addEventListener("blur", clearMovementInput);
 window.addEventListener("resize", resizeGameCanvas);
 window.addEventListener("orientationchange", resizeGameCanvas);
+window.addEventListener("pageshow", resizeGameCanvas);
+window.addEventListener("load", resizeGameCanvas);
 canvas.addEventListener("click", onCanvasClick);
 joystick.addEventListener("pointerdown", (event) => {
   event.preventDefault();

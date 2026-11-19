@@ -255,7 +255,8 @@ kbd {
   }
 }
 
-@media (orientation: landscape) and (max-width: 1200px) {
+@media (orientation: landscape) and (any-pointer: coarse),
+  (orientation: landscape) and (max-width: 1200px) {
   .site {
     display: grid;
     width: 100%;
