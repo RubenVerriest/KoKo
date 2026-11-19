@@ -66,8 +66,8 @@ class GameState {
     this.shieldCharges = 0;
     this.shieldPickup = null;
     this.elapsed = 0;
-    this.pendingDroneSide = null;
-    this.droneArrowSide = null;
+    this.pendingDroneSpawn = null;
+    this.droneArrowSpawn = null;
     this.droneArrowTime = 0;
     this.invulnerable = 0;
     this.dashCooldown = 0;
@@ -252,13 +252,10 @@ class GameState {
     }
   }
 
-  randomDroneSide() {
-    return ["left", "right", "top", "bottom"][
+  randomDroneSpawn() {
+    const side = ["left", "right", "top", "bottom"][
       Math.floor(Math.random() * 4)
     ];
-  }
-
-  spawnDrone(side = this.randomDroneSide()) {
     let position;
     if (side === "left") {
       position = [20, FIELD_TOP + Math.random() * (FIELD_BOTTOM - FIELD_TOP)];
@@ -272,7 +269,11 @@ class GameState {
     } else {
       position = [20 + Math.random() * (WIDTH - 40), FIELD_BOTTOM + 10];
     }
-    this.drones.push(position);
+    return { side, position };
+  }
+
+  spawnDrone(spawn = this.randomDroneSpawn()) {
+    this.drones.push(spawn.position);
   }
 
   nextLevel() {
@@ -284,8 +285,8 @@ class GameState {
     this.drones = [];
     this.collected = 0;
     this.elapsed = 0;
-    this.pendingDroneSide = null;
-    this.droneArrowSide = null;
+    this.pendingDroneSpawn = null;
+    this.droneArrowSpawn = null;
     this.droneArrowTime = 0;
     this.invulnerable = 0;
     this.dashCooldown = 0;
@@ -305,7 +306,7 @@ class GameState {
     this.elapsed += dt;
     this.droneArrowTime = Math.max(0, this.droneArrowTime - dt);
     if (this.droneArrowTime === 0) {
-      this.droneArrowSide = null;
+      this.droneArrowSpawn = null;
     }
     this.invulnerable = Math.max(0, this.invulnerable - dt);
     this.dashCooldown = Math.max(0, this.dashCooldown - dt);
@@ -437,17 +438,20 @@ class GameState {
     if (
       this.elapsed >= DRONE_SPAWN_INTERVAL - DRONE_WARNING_TIME
       && this.drones.length < 5
-      && !this.pendingDroneSide
+      && !this.pendingDroneSpawn
     ) {
-      this.pendingDroneSide = this.randomDroneSide();
+      this.pendingDroneSpawn = this.randomDroneSpawn();
     }
     if (this.elapsed >= DRONE_SPAWN_INTERVAL && this.drones.length < 5) {
-      const incomingSide = this.pendingDroneSide ?? this.randomDroneSide();
+      const incomingDrone = this.pendingDroneSpawn ?? this.randomDroneSpawn();
       this.elapsed = 0;
-      this.pendingDroneSide = null;
-      this.droneArrowSide = incomingSide;
+      this.pendingDroneSpawn = null;
+      this.droneArrowSpawn = {
+        side: incomingDrone.side,
+        position: incomingDrone.position.slice(),
+      };
       this.droneArrowTime = DRONE_WARNING_TIME;
-      this.spawnDrone(incomingSide);
+      this.spawnDrone(incomingDrone);
     }
     if (
       this.collected >= this.crystalGoal
@@ -560,6 +564,9 @@ class GameState {
       shieldCharges,
       shieldPickup,
       elapsed,
+      pendingDroneSpawn: null,
+      droneArrowSpawn: null,
+      droneArrowTime: 0,
       invulnerable,
       dashCooldown,
       dashTime,
@@ -976,15 +983,15 @@ function drawPlayer() {
   context.restore();
 }
 
-function drawDroneArrow(side) {
-  const centerY = (FIELD_TOP + FIELD_BOTTOM) / 2;
+function drawDroneArrow(spawn) {
+  const [spawnX, spawnY] = spawn.position;
   const positions = {
-    left: [38, centerY, 0],
-    right: [WIDTH - 38, centerY, Math.PI],
-    top: [WIDTH / 2, FIELD_TOP + 18, Math.PI / 2],
-    bottom: [WIDTH / 2, FIELD_BOTTOM - 18, -Math.PI / 2],
+    left: [spawnX + 18, spawnY, 0],
+    right: [spawnX - 18, spawnY, Math.PI],
+    top: [spawnX, spawnY + 18, Math.PI / 2],
+    bottom: [spawnX, spawnY - 18, -Math.PI / 2],
   };
-  const [x, y, angle] = positions[side];
+  const [x, y, angle] = positions[spawn.side];
   context.save();
   context.translate(x, y);
   context.rotate(angle);
@@ -1091,11 +1098,11 @@ function drawArena() {
       WIDTH / 2, FIELD_TOP + (droneWarning ? 38 : 17), 11, "#75e6d1", "700",
     );
   }
-  const arrowSide = state.droneArrowTime > 0
-    ? state.droneArrowSide
-    : state.pendingDroneSide;
-  if (arrowSide) {
-    drawDroneArrow(arrowSide);
+  const arrowSpawn = state.droneArrowTime > 0
+    ? state.droneArrowSpawn
+    : state.pendingDroneSpawn;
+  if (arrowSpawn) {
+    drawDroneArrow(arrowSpawn);
   }
 }
 
