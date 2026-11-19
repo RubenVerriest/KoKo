@@ -27,7 +27,7 @@ Verzamel genoeg kristallen om het portaal te activeren en ontwijk ondertussen de
 
 ### Functies
 
-- Speelbaar op desktop en telefoon; de geïnstalleerde webapp opent fullscreen in liggende stand en toont in portret alleen een melding om het toestel te draaien.
+- Speelbaar op desktop en telefoon; de geïnstalleerde webapp opent in liggende stand, met een knop om fullscreen aan of uit te zetten. In portret toont de app alleen een melding om het toestel te draaien.
 - Joystick, dash-, pauze- en opslagbediening voor touchscreens.
 - Drie tijdelijke power-ups: trek kristallen aan, vertraag drones of beweeg sneller.
 - Drie lokale opslagplaatsen om een spel later verder te spelen.
@@ -45,6 +45,7 @@ De ranglijst wordt alleen op het huidige apparaat opgeslagen. Scores worden niet
 | Dash | `Spatie` | **DASH** |
 | Pauzeren / doorgaan | `P` of `Esc` | **PAUZE** |
 | Opslaan | `S` vanuit pauze | **OPSLAAN** |
+| Fullscreen aan/uit | — | Tik op het fullscreen-icoon |
 | Level afronden | `Enter` | Knop voor het volgende level |
 | Opnieuw beginnen na game over | `Enter` | Via **HOOFDMENU → NIEUW SPEL** |
 | Naar het hoofdmenu na game over | `Esc` of `M` | Knop **HOOFDMENU** |
@@ -74,10 +75,10 @@ py kosmische_koerier.py
 ## Installeren op Android
 
 1. Open **[Kosmische Koerier in Chrome](https://rubenverriest.github.io/KoKo/web/)**.
-2. Open het Chrome-menu en kies **App installeren**. Gebruik niet alleen **Toevoegen aan startscherm**; dat kan een gewone snelkoppeling maken die niet fullscreen opent.
+2. Open het Chrome-menu en kies **App installeren**.
 3. Start **Koerier** daarna via het app-icoon.
 
-De oorspronkelijke appnaam is **Kosmische Koerier** (korte naam: **Koerier**). Verwijder een bestaande installatie en installeer de app opnieuw om de fullscreen-weergave toe te passen. Na toekomstige updates open je de website eerst online en vernieuw je de pagina.
+De oorspronkelijke appnaam is **Kosmische Koerier** (korte naam: **Koerier**). De app start normaal; gebruik het fullscreen-icoon tijdens het spelen voor een schermvullende weergave. Verwijder een bestaande installatie en installeer de app opnieuw als die na een update niet meer opent.
 
 > Sitegegevens wissen is een laatste redmiddel: daarmee verwijder je ook de lokale opslagplaatsen en topscores.
 
