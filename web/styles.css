@@ -311,6 +311,21 @@ kbd {
     width: clamp(76px, 22vh, 112px);
     height: clamp(76px, 22vh, 112px);
     pointer-events: auto;
+    opacity: 0.78;
+  }
+
+  .joystick-base {
+    border-color: #526481b8;
+    background: radial-gradient(
+      circle,
+      #1a2c46b3 0,
+      #111b31a6 68%,
+      #0c142680 100%
+    );
+  }
+
+  .joystick-knob {
+    background: linear-gradient(145deg, #327c89d9, #1e4656d9);
   }
 
   .mobile-actions {
@@ -319,25 +334,28 @@ kbd {
 
   .touch-controls button {
     position: absolute;
-    width: 68px;
+    width: 58px;
     min-width: 0;
-    height: 28px;
-    padding: 0 5px;
-    font-size: 0.68rem;
+    height: 24px;
+    padding: 0 3px;
+    font-size: 0.6rem;
     pointer-events: auto;
   }
 
   .mobile-actions .dash-button {
     right: max(12px, env(safe-area-inset-right, 0px));
     bottom: max(12px, env(safe-area-inset-bottom, 0px));
-    width: 76px;
-    min-width: 76px;
-    height: 44px;
+    width: 64px;
+    min-width: 64px;
+    height: 38px;
+    border-color: #526481b8;
+    background: #151f36b8;
+    opacity: 0.78;
   }
 
   #pause-button {
     top: var(--landscape-actions-top, 34px);
-    right: calc(var(--landscape-actions-right, 12px) + 74px);
+    right: calc(var(--landscape-actions-right, 12px) + 64px);
   }
 
   #save-button {

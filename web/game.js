@@ -5,6 +5,14 @@ let WIDTH = DEFAULT_WIDTH;
 const HEIGHT = 620;
 const FIELD_TOP = 90;
 const FIELD_BOTTOM = HEIGHT - 24;
+const PORTAL_LOCATIONS = [
+  [0.28, 0.28],
+  [0.5, 0.24],
+  [0.72, 0.42],
+  [0.28, 0.68],
+  [0.5, 0.74],
+  [0.72, 0.68],
+];
 const MENU_BUTTON_WIDTH = 460;
 const CRYSTAL_GOAL = 8;
 const CRYSTALS_ON_MAP = 6;
@@ -106,7 +114,20 @@ class GameState {
   }
 
   get portal() {
-    return [WIDTH - 76, FIELD_BOTTOM - 64];
+    const firstLocation = (this.level - 1) % PORTAL_LOCATIONS.length;
+    for (let offset = 0; offset < PORTAL_LOCATIONS.length; offset += 1) {
+      const location = PORTAL_LOCATIONS[
+        (firstLocation + offset) % PORTAL_LOCATIONS.length
+      ];
+      const position = [
+        WIDTH * location[0],
+        FIELD_TOP + (FIELD_BOTTOM - FIELD_TOP) * location[1],
+      ];
+      if (!this.overlapsWall(...position, 28)) {
+        return position;
+      }
+    }
+    return [WIDTH * 0.75, FIELD_TOP + 80];
   }
 
   levelWalls(level = this.level) {
