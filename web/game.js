@@ -66,6 +66,9 @@ class GameState {
     this.shieldCharges = 0;
     this.shieldPickup = null;
     this.elapsed = 0;
+    this.pendingDroneSide = null;
+    this.droneArrowSide = null;
+    this.droneArrowTime = 0;
     this.invulnerable = 0;
     this.dashCooldown = 0;
     this.dashTime = 0;
@@ -249,10 +252,13 @@ class GameState {
     }
   }
 
-  spawnDrone() {
-    const side = ["left", "right", "top", "bottom"][
+  randomDroneSide() {
+    return ["left", "right", "top", "bottom"][
       Math.floor(Math.random() * 4)
     ];
+  }
+
+  spawnDrone(side = this.randomDroneSide()) {
     let position;
     if (side === "left") {
       position = [20, FIELD_TOP + Math.random() * (FIELD_BOTTOM - FIELD_TOP)];
@@ -278,6 +284,9 @@ class GameState {
     this.drones = [];
     this.collected = 0;
     this.elapsed = 0;
+    this.pendingDroneSide = null;
+    this.droneArrowSide = null;
+    this.droneArrowTime = 0;
     this.invulnerable = 0;
     this.dashCooldown = 0;
     this.dashTime = 0;
@@ -294,6 +303,10 @@ class GameState {
     }
     dt = Math.min(dt, 0.05);
     this.elapsed += dt;
+    this.droneArrowTime = Math.max(0, this.droneArrowTime - dt);
+    if (this.droneArrowTime === 0) {
+      this.droneArrowSide = null;
+    }
     this.invulnerable = Math.max(0, this.invulnerable - dt);
     this.dashCooldown = Math.max(0, this.dashCooldown - dt);
     this.dashTime = Math.max(0, this.dashTime - dt);
@@ -421,9 +434,20 @@ class GameState {
         break;
       }
     }
+    if (
+      this.elapsed >= DRONE_SPAWN_INTERVAL - DRONE_WARNING_TIME
+      && this.drones.length < 5
+      && !this.pendingDroneSide
+    ) {
+      this.pendingDroneSide = this.randomDroneSide();
+    }
     if (this.elapsed >= DRONE_SPAWN_INTERVAL && this.drones.length < 5) {
+      const incomingSide = this.pendingDroneSide ?? this.randomDroneSide();
       this.elapsed = 0;
-      this.spawnDrone();
+      this.pendingDroneSide = null;
+      this.droneArrowSide = incomingSide;
+      this.droneArrowTime = DRONE_WARNING_TIME;
+      this.spawnDrone(incomingSide);
     }
     if (
       this.collected >= this.crystalGoal
@@ -762,6 +786,19 @@ function syncTouchButtons() {
       : "PAUZE";
 }
 
+function positionLandscapeControls() {
+  const bounds = canvas.getBoundingClientRect();
+  const scale = bounds.height / HEIGHT;
+  document.documentElement.style.setProperty(
+    "--landscape-actions-top",
+    `${bounds.top + FIELD_TOP * scale - 29}px`,
+  );
+  document.documentElement.style.setProperty(
+    "--landscape-actions-right",
+    `${window.innerWidth - bounds.right + 8}px`,
+  );
+}
+
 function drawText(text, x, y, size, color, weight = "normal", align = "center") {
   context.fillStyle = color;
   context.font = `${weight} ${size}px "Segoe UI", Arial, sans-serif`;
@@ -939,6 +976,37 @@ function drawPlayer() {
   context.restore();
 }
 
+function drawDroneArrow(side) {
+  const centerY = (FIELD_TOP + FIELD_BOTTOM) / 2;
+  const positions = {
+    left: [38, centerY, 0],
+    right: [WIDTH - 38, centerY, Math.PI],
+    top: [WIDTH / 2, FIELD_TOP + 18, Math.PI / 2],
+    bottom: [WIDTH / 2, FIELD_BOTTOM - 18, -Math.PI / 2],
+  };
+  const [x, y, angle] = positions[side];
+  context.save();
+  context.translate(x, y);
+  context.rotate(angle);
+  context.shadowColor = "#ff405b";
+  context.shadowBlur = 12;
+  context.fillStyle = "#ff405b";
+  context.strokeStyle = "#fff0f2";
+  context.lineWidth = 2;
+  context.beginPath();
+  context.moveTo(24, 0);
+  context.lineTo(7, -13);
+  context.lineTo(7, -5);
+  context.lineTo(-18, -5);
+  context.lineTo(-18, 5);
+  context.lineTo(7, 5);
+  context.lineTo(7, 13);
+  context.closePath();
+  context.fill();
+  context.stroke();
+  context.restore();
+}
+
 function drawArena() {
   drawStars();
   context.fillStyle = "#10182b";
@@ -1023,6 +1091,12 @@ function drawArena() {
       WIDTH / 2, FIELD_TOP + (droneWarning ? 38 : 17), 11, "#75e6d1", "700",
     );
   }
+  const arrowSide = state.droneArrowTime > 0
+    ? state.droneArrowSide
+    : state.pendingDroneSide;
+  if (arrowSide) {
+    drawDroneArrow(arrowSide);
+  }
 }
 
 function drawOverlay(title, subtitle) {
@@ -1087,6 +1161,8 @@ function frame(timestamp) {
 window.addEventListener("keydown", onKeyDown);
 window.addEventListener("keyup", onKeyUp);
 window.addEventListener("blur", clearMovementInput);
+window.addEventListener("resize", positionLandscapeControls);
+window.addEventListener("orientationchange", positionLandscapeControls);
 canvas.addEventListener("click", onCanvasClick);
 joystick.addEventListener("pointerdown", (event) => {
   event.preventDefault();
@@ -1147,6 +1223,7 @@ nextLevelButton.addEventListener("click", () => {
   }
 });
 readSaveSlots();
+positionLandscapeControls();
 requestAnimationFrame(frame);
 
 if ("serviceWorker" in navigator) {
