@@ -21,6 +21,12 @@ py -m http.server 8000
 
 Open daarna `http://localhost:8000`.
 
+## Publiceren met GitHub Pages
+
+Stel GitHub Pages in om vanaf de repository-root te publiceren. Het
+`index.html`-bestand in de root stuurt bezoekers automatisch door naar de
+website in `web/`.
+
 ## Gratis publiceren met Cloudflare Pages
 
 1. Maak een Cloudflare-account aan en open **Workers & Pages → Create application → Pages → Upload assets**.
