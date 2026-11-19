@@ -20,6 +20,7 @@ const joystickKnob = document.querySelector(".joystick-knob");
 const dashButton = document.querySelector(".dash-button");
 const pauseButton = document.querySelector("#pause-button");
 const saveButton = document.querySelector("#save-button");
+const nextLevelButton = document.querySelector("#next-level-button");
 const pressedKeys = new Set();
 let joystickPointerId = null;
 let joystickInput = { x: 0, y: 0 };
@@ -752,6 +753,8 @@ function syncTouchButtons() {
   dashButton.disabled = !canPlay;
   pauseButton.disabled = !["playing", "paused", "saving"].includes(state.screen);
   saveButton.disabled = !["playing", "paused"].includes(state.screen);
+  nextLevelButton.hidden = state.screen !== "won";
+  nextLevelButton.textContent = `ENTER: LEVEL ${state.level + 1}`;
   pauseButton.textContent = state.screen === "paused"
     ? "VERDER"
     : state.screen === "saving"
@@ -1134,6 +1137,12 @@ pauseButton.addEventListener("click", () => {
 saveButton.addEventListener("click", () => {
   if (state.screen === "playing" || state.screen === "paused") {
     state.screen = "saving";
+    clearMovementInput();
+  }
+});
+nextLevelButton.addEventListener("click", () => {
+  if (state.screen === "won") {
+    state.nextLevel();
     clearMovementInput();
   }
 });
