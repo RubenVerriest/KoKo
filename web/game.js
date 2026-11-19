@@ -770,7 +770,10 @@ function onKeyDown(event) {
     return;
   }
   if (state.screen === "over" || state.screen === "won") {
-    if (key === "enter") {
+    if (state.screen === "over" && ["escape", "m"].includes(key)) {
+      state.screen = "menu";
+      clearMovementInput();
+    } else if (key === "enter") {
       if (state.screen === "over") {
         startGame();
       } else {
@@ -859,6 +862,13 @@ function onCanvasClick(event) {
     && y >= 556 && y <= 598
   ) {
     state.screen = "menu";
+  } else if (
+    state.screen === "over"
+    && x >= buttonLeft && x <= buttonLeft + MENU_BUTTON_WIDTH
+    && y >= 390 && y <= 432
+  ) {
+    state.screen = "menu";
+    clearMovementInput();
   } else if (state.screen === "saving") {
     for (let index = 0; index < SAVE_COUNT; index += 1) {
       const top = 365 + index * 47;
@@ -1375,7 +1385,11 @@ function draw() {
       `Druk op ENTER voor level ${state.level + 1}`,
     );
   } else if (state.screen === "over") {
-    drawOverlay("GAME OVER", "Druk op ENTER om opnieuw te proberen");
+    drawOverlay(
+      "GAME OVER",
+      "ENTER • opnieuw proberen\nESC / M • hoofdmenu",
+    );
+    drawButton(390, "HOOFDMENU  (KLIK / ESC / M)");
   }
 }
 

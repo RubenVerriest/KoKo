@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "kosmische-koerier-v11";
+const CACHE_NAME = "kosmische-koerier-v12";
 const APP_SHELL = [
   "",
   "index.html",
