@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta
+      name="description"
+      content="Speel Kosmische Koerier, een gratis ruimte-avontuur in je browser."
+    >
+    <meta name="theme-color" content="#080d1b">
+    <title>Kosmische Koerier — ruimte-avontuur</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="site">
+      <header class="site-header">
+        <p class="eyebrow">EEN GRATIS RUIMTE-AVONTUUR</p>
+        <h1>Kosmische Koerier</h1>
+        <p class="tagline">Verzamel sterrenkristallen. Ontwijk de drones. Vind de portal.</p>
+      </header>
+
+      <section class="game-shell" aria-label="Kosmische Koerier browsergame">
+        <canvas id="game" width="900" height="620" aria-label="Spelgebied">
+          Je browser ondersteunt de canvas-weergave van dit spel niet.
+        </canvas>
+      </section>
+
+      <nav class="touch-controls" aria-label="Aanraakbesturing">
+        <div class="direction-pad">
+          <button type="button" data-key="up" aria-label="Omhoog">▲</button>
+          <div class="direction-row">
+            <button type="button" data-key="left" aria-label="Links">◀</button>
+            <button type="button" data-key="down" aria-label="Omlaag">▼</button>
+            <button type="button" data-key="right" aria-label="Rechts">▶</button>
+          </div>
+        </div>
+        <button type="button" class="dash-button" data-key="dash">DASH</button>
+      </nav>
+
+      <p class="controls">
+        Bewegen: <kbd>WASD</kbd> / <kbd>← ↑ ↓ →</kbd>
+        <span>Dash: <kbd>Spatie</kbd></span>
+        <span>Pauze: <kbd>P</kbd></span>
+      </p>
+
+      <aside class="ad-slot" aria-label="Advertentie">
+        <span class="ad-label">Advertentie</span>
+        <p>Deze plek kan worden gebruikt voor advertenties zodra je account en website zijn goedgekeurd.</p>
+      </aside>
+
+      <footer class="site-footer">
+        <p>Een klein, onafhankelijk spelproject. <a href="privacy.html">Privacy en cookies</a></p>
+      </footer>
+    </main>
+    <script src="game.js"></script>
+  </body>
+</html>
