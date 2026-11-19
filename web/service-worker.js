@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "kosmische-koerier-v9";
+const CACHE_NAME = "kosmische-koerier-v10";
 const APP_SHELL = [
   "",
   "index.html",
@@ -17,7 +17,12 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(
-        APP_SHELL.map((file) => new URL(file, self.registration.scope)),
+        APP_SHELL.map((file) =>
+          new Request(
+            new URL(file, self.registration.scope),
+            { cache: "reload" },
+          )
+        ),
       ))
       .then(() => self.skipWaiting()),
   );
