@@ -27,6 +27,14 @@ Stel GitHub Pages in om vanaf de repository-root te publiceren. Het
 `index.html`-bestand in de root stuurt bezoekers automatisch door naar de
 website in `web/`.
 
+## Installeren als Android-app
+
+Open de gepubliceerde website in Chrome en kies **Menu → App installeren**.
+Gebruik niet alleen **Toevoegen aan startscherm**; dat maakt een snelkoppeling
+die de appnaam, fullscreen-weergave en landscape-oriëntatie mogelijk niet
+overneemt. Verwijder na een update de oude installatie en installeer de app
+opnieuw als Chrome de nieuwe naam of weergave niet toepast.
+
 ## Gratis publiceren met Cloudflare Pages
 
 1. Maak een Cloudflare-account aan en open **Workers & Pages → Create application → Pages → Upload assets**.

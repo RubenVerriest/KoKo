@@ -5,6 +5,7 @@ let WIDTH = DEFAULT_WIDTH;
 const HEIGHT = 620;
 const FIELD_TOP = 90;
 const FIELD_BOTTOM = HEIGHT - 24;
+const MENU_BUTTON_WIDTH = 460;
 const CRYSTAL_GOAL = 8;
 const CRYSTALS_ON_MAP = 6;
 const PLAYER_SPEED = 245;
@@ -737,14 +738,21 @@ function canvasPoint(event) {
 
 function onCanvasClick(event) {
   const [x, y] = canvasPoint(event);
+  const buttonLeft = (WIDTH - MENU_BUTTON_WIDTH) / 2;
   if (state.screen === "menu") {
-    if (x >= 220 && x <= 680 && y >= 390 && y <= 430) {
+    if (
+      x >= buttonLeft && x <= buttonLeft + MENU_BUTTON_WIDTH
+      && y >= 390 && y <= 430
+    ) {
       startGame();
       return;
     }
     for (let index = 0; index < SAVE_COUNT; index += 1) {
       const top = 440 + index * 46;
-      if (x >= 220 && x <= 680 && y >= top && y <= top + 42) {
+      if (
+        x >= buttonLeft && x <= buttonLeft + MENU_BUTTON_WIDTH
+        && y >= top && y <= top + 42
+      ) {
         loadSlot(index);
         return;
       }
@@ -752,12 +760,18 @@ function onCanvasClick(event) {
   } else if (state.screen === "saving") {
     for (let index = 0; index < SAVE_COUNT; index += 1) {
       const top = 365 + index * 47;
-      if (x >= 220 && x <= 680 && y >= top && y <= top + 40) {
+      if (
+        x >= buttonLeft && x <= buttonLeft + MENU_BUTTON_WIDTH
+        && y >= top && y <= top + 40
+      ) {
         saveSlot(index);
         return;
       }
     }
-    if (x >= 220 && x <= 680 && y >= 510 && y <= 550) {
+    if (
+      x >= buttonLeft && x <= buttonLeft + MENU_BUTTON_WIDTH
+      && y >= 510 && y <= 550
+    ) {
       state.screen = "paused";
     }
   }
@@ -893,8 +907,9 @@ function drawStars() {
 }
 
 function drawButton(y, label, active = false) {
+  const buttonLeft = (WIDTH - MENU_BUTTON_WIDTH) / 2;
   roundedRect(
-    220, y, 460, 42, 8,
+    buttonLeft, y, MENU_BUTTON_WIDTH, 42, 8,
     active ? "#173c48" : "#151f36",
     active ? "#75e6d1" : "#39445f",
   );
