@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "kosmische-koerier-v4";
+const CACHE_NAME = "kosmische-koerier-v8";
 const APP_SHELL = [
   "",
   "index.html",
@@ -29,7 +29,11 @@ self.addEventListener("activate", (event) => {
       .then((cacheNames) => Promise.all(
         cacheNames
           .filter((name) =>
-            name.startsWith("kosmische-koerier-") && name !== CACHE_NAME
+            (
+              name.startsWith("kosmische-koerier-")
+              || name === "koko-pwa-v1"
+            )
+            && name !== CACHE_NAME
           )
           .map((name) => caches.delete(name)),
       ))

@@ -27,7 +27,7 @@ Verzamel genoeg kristallen om het portaal te activeren en ontwijk ondertussen de
 
 ### Functies
 
-- Speelbaar op desktop en telefoon; de geïnstalleerde webapp vraagt om fullscreen in liggende stand en de browsergame past zich aan de schermoriëntatie aan.
+- Speelbaar op desktop en telefoon; de geïnstalleerde webapp opent in appweergave en liggende stand, terwijl de browsergame zich aan de schermoriëntatie aanpast.
 - Joystick, dash-, pauze- en opslagbediening voor touchscreens.
 - Drie tijdelijke power-ups: trek kristallen aan, vertraag drones of beweeg sneller.
 - Drie lokale opslagplaatsen om een spel later verder te spelen.
@@ -77,7 +77,7 @@ py kosmische_koerier.py
 2. Open het Chrome-menu en kies **App installeren** of **Toevoegen aan startscherm**.
 3. Start **Koerier** daarna via het app-icoon.
 
-De oorspronkelijke appnaam is **Kosmische Koerier** (korte naam: **Koerier**). Na een update open je de website eerst online en vernieuw je de pagina. Als de nieuwe fullscreen-weergave niet wordt toegepast, verwijder je de oude installatie en installeer je de app opnieuw.
+De oorspronkelijke appnaam is **Kosmische Koerier** (korte naam: **Koerier**). Na een update open je de website eerst online en vernieuw je de pagina. Als de nieuwe appweergave of liggende stand niet wordt toegepast, verwijder je de oude installatie en installeer je de app opnieuw.
 
 > Sitegegevens wissen is een laatste redmiddel: daarmee verwijder je ook de lokale opslagplaatsen en topscores.
 
