@@ -27,7 +27,7 @@ Verzamel genoeg kristallen om het portaal te activeren en ontwijk ondertussen de
 
 ### Functies
 
-- Speelbaar op desktop en telefoon; de geïnstalleerde webapp opent fullscreen in liggende stand en toont in portret alleen een melding om het toestel te draaien.
+- Speelbaar op desktop en telefoon; de geïnstalleerde webapp vraagt om fullscreen in liggende stand en de browsergame past zich aan de schermoriëntatie aan.
 - Joystick, dash-, pauze- en opslagbediening voor touchscreens.
 - Drie tijdelijke power-ups: trek kristallen aan, vertraag drones of beweeg sneller.
 - Drie lokale opslagplaatsen om een spel later verder te spelen.

@@ -40,13 +40,6 @@ const dashButton = document.querySelector(".dash-button");
 const pauseButton = document.querySelector("#pause-button");
 const saveButton = document.querySelector("#save-button");
 const nextLevelButton = document.querySelector("#next-level-button");
-if (
-  matchMedia("(display-mode: fullscreen)").matches
-  || matchMedia("(display-mode: standalone)").matches
-  || window.navigator.standalone === true
-) {
-  document.documentElement.classList.add("installed-app");
-}
 const pressedKeys = new Set();
 let joystickPointerId = null;
 let joystickInput = { x: 0, y: 0 };
