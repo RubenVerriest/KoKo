@@ -15,7 +15,14 @@ const DRONE_WARNING_TIME = 3;
 const SAVE_COUNT = 3;
 const canvas = document.querySelector("#game");
 const context = canvas.getContext("2d");
+const joystick = document.querySelector("#joystick");
+const joystickKnob = document.querySelector(".joystick-knob");
+const dashButton = document.querySelector(".dash-button");
+const pauseButton = document.querySelector("#pause-button");
+const saveButton = document.querySelector("#save-button");
 const pressedKeys = new Set();
+let joystickPointerId = null;
+let joystickInput = { x: 0, y: 0 };
 const stars = Array.from({ length: 100 }, () => ({
   x: Math.random() * WIDTH,
   y: FIELD_TOP + Math.random() * (HEIGHT - FIELD_TOP),
@@ -280,7 +287,7 @@ class GameState {
     this.spawnShieldPickup();
   }
 
-  step(dt, directions, dash) {
+  step(dt, directions, dash, joystickDirection = null) {
     if (this.screen !== "playing") {
       return;
     }
@@ -294,12 +301,21 @@ class GameState {
       this.dashCooldown = DASH_COOLDOWN;
     }
 
-    const dx = Number(directions.has("right")) - Number(directions.has("left"));
-    const dy = Number(directions.has("down")) - Number(directions.has("up"));
+    let dx = Number(directions.has("right")) - Number(directions.has("left"));
+    let dy = Number(directions.has("down")) - Number(directions.has("up"));
+    let movementScale = 1;
+    if (joystickDirection) {
+      const joystickStrength = Math.hypot(joystickDirection.x, joystickDirection.y);
+      if (joystickStrength > 0) {
+        dx = joystickDirection.x;
+        dy = joystickDirection.y;
+        movementScale = Math.min(joystickStrength, 1);
+      }
+    }
     if (dx || dy) {
       const magnitude = Math.hypot(dx, dy);
       this.playerDirection = [dx / magnitude, dy / magnitude];
-      const speed = PLAYER_SPEED * (this.dashTime ? 2.35 : 1);
+      const speed = PLAYER_SPEED * (this.dashTime ? 2.35 : 1) * movementScale;
       const moveX = dx / magnitude * speed * dt;
       const moveY = dy / magnitude * speed * dt;
       if (!this.overlapsWall(this.player[0] + moveX, this.player[1], 20)) {
@@ -551,7 +567,7 @@ function readSaveSlots() {
 function startGame() {
   state.reset();
   notice = "";
-  pressedKeys.clear();
+  clearMovementInput();
 }
 
 function loadSlot(index) {
@@ -563,7 +579,7 @@ function loadSlot(index) {
   try {
     state.load(data);
     notice = "";
-    pressedKeys.clear();
+    clearMovementInput();
   } catch (error) {
     notice = `Slot ${index + 1} kon niet worden geladen: ${error.message}`;
   }
@@ -603,14 +619,17 @@ function onKeyDown(event) {
       saveSlot(Number(key) - 1);
     } else if (key === "escape" || key === "p") {
       state.screen = "paused";
+      clearMovementInput();
     }
     return;
   }
   if (state.screen === "paused") {
     if (key === "p" || key === "escape") {
       state.screen = "playing";
+      clearMovementInput();
     } else if (key === "s") {
       state.screen = "saving";
+      clearMovementInput();
     }
     return;
   }
@@ -640,6 +659,7 @@ function onKeyDown(event) {
     pressedKeys.add("dash");
   } else if (key === "p" || key === "escape") {
     state.screen = "paused";
+    clearMovementInput();
   }
 }
 
@@ -695,6 +715,48 @@ function onCanvasClick(event) {
       state.screen = "paused";
     }
   }
+}
+
+function clearJoystick() {
+  joystickPointerId = null;
+  joystickInput = { x: 0, y: 0 };
+  joystickKnob.style.left = "50%";
+  joystickKnob.style.top = "50%";
+}
+
+function clearMovementInput() {
+  pressedKeys.clear();
+  clearJoystick();
+}
+
+function moveJoystick(event) {
+  const bounds = joystick.getBoundingClientRect();
+  const maxRadius = bounds.width / 2 - joystickKnob.offsetWidth / 2 - 8;
+  let offsetX = event.clientX - (bounds.left + bounds.width / 2);
+  let offsetY = event.clientY - (bounds.top + bounds.height / 2);
+  const length = Math.hypot(offsetX, offsetY);
+  if (length > maxRadius) {
+    offsetX = offsetX / length * maxRadius;
+    offsetY = offsetY / length * maxRadius;
+  }
+  joystickKnob.style.left = `calc(50% + ${offsetX}px)`;
+  joystickKnob.style.top = `calc(50% + ${offsetY}px)`;
+  const strength = Math.hypot(offsetX, offsetY) / maxRadius;
+  joystickInput = strength < 0.12
+    ? { x: 0, y: 0 }
+    : { x: offsetX / maxRadius, y: offsetY / maxRadius };
+}
+
+function syncTouchButtons() {
+  const canPlay = state.screen === "playing";
+  dashButton.disabled = !canPlay;
+  pauseButton.disabled = !["playing", "paused", "saving"].includes(state.screen);
+  saveButton.disabled = !["playing", "paused"].includes(state.screen);
+  pauseButton.textContent = state.screen === "paused"
+    ? "VERDER"
+    : state.screen === "saving"
+      ? "TERUG"
+      : "PAUZE";
 }
 
 function drawText(text, x, y, size, color, weight = "normal", align = "center") {
@@ -1013,15 +1075,36 @@ function frame(timestamp) {
     ? 0
     : Math.min((timestamp - frame.lastTime) / 1000, 0.05);
   frame.lastTime = timestamp;
-  state.step(dt, pressedKeys, pressedKeys.has("dash"));
+  state.step(dt, pressedKeys, pressedKeys.has("dash"), joystickInput);
+  syncTouchButtons();
   draw();
   requestAnimationFrame(frame);
 }
 
 window.addEventListener("keydown", onKeyDown);
 window.addEventListener("keyup", onKeyUp);
-window.addEventListener("blur", () => pressedKeys.clear());
+window.addEventListener("blur", clearMovementInput);
 canvas.addEventListener("click", onCanvasClick);
+joystick.addEventListener("pointerdown", (event) => {
+  event.preventDefault();
+  joystickPointerId = event.pointerId;
+  joystick.setPointerCapture(event.pointerId);
+  moveJoystick(event);
+});
+joystick.addEventListener("pointermove", (event) => {
+  if (event.pointerId === joystickPointerId) {
+    event.preventDefault();
+    moveJoystick(event);
+  }
+});
+const releaseJoystick = (event) => {
+  if (event.pointerId === joystickPointerId) {
+    clearJoystick();
+  }
+};
+joystick.addEventListener("pointerup", releaseJoystick);
+joystick.addEventListener("pointercancel", releaseJoystick);
+joystick.addEventListener("lostpointercapture", releaseJoystick);
 document.querySelectorAll(".touch-controls [data-key]").forEach((button) => {
   const key = button.dataset.key;
   button.addEventListener("pointerdown", (event) => {
@@ -1037,5 +1120,30 @@ document.querySelectorAll(".touch-controls [data-key]").forEach((button) => {
   button.addEventListener("pointercancel", release);
   button.addEventListener("lostpointercapture", release);
 });
+pauseButton.addEventListener("click", () => {
+  if (state.screen === "playing") {
+    state.screen = "paused";
+    clearMovementInput();
+  } else if (state.screen === "paused") {
+    state.screen = "playing";
+    notice = "";
+  } else if (state.screen === "saving") {
+    state.screen = "paused";
+  }
+});
+saveButton.addEventListener("click", () => {
+  if (state.screen === "playing" || state.screen === "paused") {
+    state.screen = "saving";
+    clearMovementInput();
+  }
+});
 readSaveSlots();
 requestAnimationFrame(frame);
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js").catch((error) => {
+      console.error("De offlinecache kon niet worden gestart.", error);
+    });
+  });
+}

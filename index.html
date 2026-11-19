@@ -8,7 +8,12 @@
       content="Speel Kosmische Koerier, een gratis ruimte-avontuur in je browser."
     >
     <meta name="theme-color" content="#080d1b">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Koerier">
     <title>Kosmische Koerier — ruimte-avontuur</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
@@ -26,15 +31,21 @@
       </section>
 
       <nav class="touch-controls" aria-label="Aanraakbesturing">
-        <div class="direction-pad">
-          <button type="button" data-key="up" aria-label="Omhoog">▲</button>
-          <div class="direction-row">
-            <button type="button" data-key="left" aria-label="Links">◀</button>
-            <button type="button" data-key="down" aria-label="Omlaag">▼</button>
-            <button type="button" data-key="right" aria-label="Rechts">▶</button>
+        <div
+          id="joystick"
+          class="joystick"
+          role="application"
+          aria-label="Beweegjoystick: houd vast en sleep in de gewenste richting"
+        >
+          <div class="joystick-base">
+            <div class="joystick-knob"></div>
           </div>
         </div>
-        <button type="button" class="dash-button" data-key="dash">DASH</button>
+        <div class="mobile-actions">
+          <button type="button" class="dash-button" data-key="dash">DASH</button>
+          <button type="button" id="pause-button" data-action="pause">PAUZE</button>
+          <button type="button" id="save-button" data-action="save">OPSLAAN</button>
+        </div>
       </nav>
 
       <p class="controls">

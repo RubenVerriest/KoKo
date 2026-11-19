@@ -2,6 +2,15 @@
 
 Dit is een zelfstandige HTML5/JavaScript-versie van de Tkinter-game. Er zijn geen Python-packages, buildstappen of Buildozer nodig. De drie opslagslots worden lokaal in de browser bewaard.
 
+De site heeft ook een PWA-manifest en service worker. Op een beveiligde website
+(HTTPS; `localhost` werkt voor testen) kan een ondersteunde browser de game
+installeren en de spelbestanden voor offline gebruik cachen. Na een update kan
+de browser de oude cache nog één keer gebruiken; laad de pagina daarna opnieuw.
+
+Op een telefoon vervangt een sleepbare joystick de toetsenbesturing. De knoppen
+**DASH**, **PAUZE** en **OPSLAAN** staan ernaast; opslaan gebruikt dezelfde drie
+browseropslagslots als de desktopversie.
+
 ## Lokaal bekijken
 
 Open `index.html` in een recente browser. Voor een lokale webserver kun je in deze map uitvoeren:
