@@ -39,14 +39,12 @@ const joystickKnob = document.querySelector(".joystick-knob");
 const dashButton = document.querySelector(".dash-button");
 const pauseButton = document.querySelector("#pause-button");
 const saveButton = document.querySelector("#save-button");
-const fullscreenButton = document.querySelector("#fullscreen-button");
-const fullscreenStatus = document.querySelector("#fullscreen-status");
 const nextLevelButton = document.querySelector("#next-level-button");
-const isInstalledApp =
+if (
   matchMedia("(display-mode: fullscreen)").matches
   || matchMedia("(display-mode: standalone)").matches
-  || window.navigator.standalone === true;
-if (isInstalledApp) {
+  || window.navigator.standalone === true
+) {
   document.documentElement.classList.add("installed-app");
 }
 const pressedKeys = new Set();
@@ -65,7 +63,6 @@ context.scale(pixelRatio, pixelRatio);
 let notice = "";
 let saveSlots = Array(SAVE_COUNT).fill(null);
 let localScores = [];
-let fullscreenStatusTimeout = null;
 
 function distance(x1, y1, x2, y2) {
   return Math.hypot(x2 - x1, y2 - y1);
@@ -1115,43 +1112,6 @@ function syncTouchButtons() {
       : "PAUZE";
 }
 
-function updateFullscreenButton() {
-  const isFullscreen = Boolean(document.fullscreenElement);
-  const label = isFullscreen
-    ? "Volledig scherm verlaten"
-    : "Volledig scherm inschakelen";
-  fullscreenButton.setAttribute("aria-label", label);
-  fullscreenButton.title = label;
-  fullscreenButton.setAttribute("aria-pressed", String(isFullscreen));
-}
-
-function showFullscreenError(error) {
-  console.error("De fullscreen-weergave kon niet worden aangepast.", error);
-  fullscreenStatus.textContent = "Volledig scherm is niet beschikbaar op dit apparaat.";
-  fullscreenStatus.hidden = false;
-  window.clearTimeout(fullscreenStatusTimeout);
-  fullscreenStatusTimeout = window.setTimeout(() => {
-    fullscreenStatus.hidden = true;
-  }, 4000);
-}
-
-async function toggleFullscreen() {
-  fullscreenStatus.hidden = true;
-  try {
-    if (document.fullscreenElement) {
-      await document.exitFullscreen();
-      return;
-    }
-    const root = document.documentElement;
-    if (typeof root.requestFullscreen !== "function") {
-      throw new Error("Deze browser ondersteunt fullscreen niet.");
-    }
-    await root.requestFullscreen({ navigationUI: "hide" });
-  } catch (error) {
-    showFullscreenError(error);
-  }
-}
-
 function positionLandscapeControls() {
   const bounds = canvas.getBoundingClientRect();
   if (!bounds.width || !bounds.height) {
@@ -1678,7 +1638,6 @@ window.addEventListener("resize", resizeGameCanvas);
 window.addEventListener("orientationchange", resizeGameCanvas);
 window.addEventListener("pageshow", resizeGameCanvas);
 window.addEventListener("load", resizeGameCanvas);
-document.addEventListener("fullscreenchange", updateFullscreenButton);
 canvas.addEventListener("click", onCanvasClick);
 joystick.addEventListener("pointerdown", (event) => {
   event.preventDefault();
@@ -1732,7 +1691,6 @@ saveButton.addEventListener("click", () => {
     clearMovementInput();
   }
 });
-fullscreenButton.addEventListener("click", toggleFullscreen);
 nextLevelButton.addEventListener("click", () => {
   if (state.screen === "won") {
     state.nextLevel();
@@ -1741,7 +1699,6 @@ nextLevelButton.addEventListener("click", () => {
 });
 readSaveSlots();
 readLocalScores();
-updateFullscreenButton();
 resizeGameCanvas();
 requestAnimationFrame(frame);
 

@@ -150,45 +150,6 @@ kbd {
   background: #1e4656;
 }
 
-#fullscreen-button {
-  display: grid;
-  min-width: 44px;
-  place-items: center;
-  padding: 0;
-}
-
-#fullscreen-button svg {
-  width: 18px;
-  height: 18px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.fullscreen-status {
-  position: fixed;
-  z-index: 4;
-  top: max(8px, env(safe-area-inset-top, 0px));
-  left: 50%;
-  max-width: calc(100vw - 24px);
-  margin: 0;
-  padding: 8px 12px;
-  transform: translateX(-50%);
-  border: 1px solid #526481;
-  border-radius: 8px;
-  background: #0c1325e8;
-  color: #f3f5ff;
-  font-size: 0.8rem;
-  text-align: center;
-  pointer-events: none;
-}
-
-.fullscreen-status[hidden] {
-  display: none;
-}
-
 .mobile-actions {
   display: flex;
   flex: 1 1 auto;
@@ -404,19 +365,6 @@ kbd {
   #save-button {
     top: var(--landscape-actions-top, 34px);
     right: var(--landscape-actions-right, 12px);
-  }
-
-  #fullscreen-button {
-    top: var(--landscape-actions-top, 34px);
-    right: calc(var(--landscape-actions-right, 12px) + 128px);
-    width: 32px;
-    min-width: 32px;
-    height: 24px;
-  }
-
-  #fullscreen-button svg {
-    width: 15px;
-    height: 15px;
   }
 
   #next-level-button {
