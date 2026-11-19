@@ -1,70 +1,129 @@
-# Kosmische Koerier — browserversie
+# KoKo — Kosmische Koerier
 
-Dit is een zelfstandige HTML5/JavaScript-versie van de Tkinter-game. Er zijn geen Python-packages, buildstappen of Buildozer nodig. De drie opslagslots worden lokaal in de browser bewaard.
+![HTML5 Canvas](https://img.shields.io/badge/HTML5-Canvas-E34F26?logo=html5&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-Vanilla-F7DF1E?logo=javascript&logoColor=black)
+![Progressive Web App](https://img.shields.io/badge/Progressive_Web_App-PWA-5A0FC8)
 
-De site heeft een PWA-manifest en service worker. Op HTTPS (of `localhost` voor
-testen) kan Chrome de game installeren. Appbestanden worden netwerk-eerst
-geladen; de cache is alleen de offline terugval.
+> Verzamel sterrenkristallen, ontwijk drones en bereik het portaal in dit compacte ruimte-avontuur voor desktop en mobiel.
 
-Op een telefoon vervangt een sleepbare joystick de toetsenbesturing. De knoppen
-**DASH**, **PAUZE** en **OPSLAAN** staan ernaast; opslaan gebruikt dezelfde drie
-browseropslagslots als de desktopversie.
+**[Speel KoKo](https://rubenverriest.github.io/KoKo/web/)**
 
-De lokale topscores worden alleen op het gebruikte apparaat bewaard. Ze worden
-niet online gedeeld en vormen dus geen wereldwijde, landelijke of
-vriendengroep-ranglijst.
+De game is ook te installeren als webapp via Chrome. De browsergame is gebouwd met HTML, CSS en JavaScript; er zijn geen JavaScript-packages of buildstappen nodig.
 
-## Lokaal bekijken
+## Inhoud
 
-Open `index.html` in een recente browser. Voor een lokale webserver kun je in deze map uitvoeren:
+- [Over de game](#over-de-game)
+- [Functies](#functies)
+- [Besturing](#besturing)
+- [Lokaal starten](#lokaal-starten)
+- [Installeren op Android](#installeren-op-android)
+- [Publiceren](#publiceren)
+- [Projectstructuur](#projectstructuur)
+- [Privacy](#privacy)
 
-```powershell
-py -m http.server 8000
-```
+## Over de game
 
-Open daarna `http://localhost:8000`.
+Verzamel genoeg kristallen om het portaal te activeren en ontwijk ondertussen de drones. Ieder level wordt uitdagender. Gebruik je dash en pak een schildkristal om langer te overleven.
 
-## Publiceren met GitHub Pages
+### Functies
 
-Stel GitHub Pages in om vanaf de repository-root te publiceren. Het
-`index.html`-bestand in de root stuurt bezoekers automatisch door naar de
-website in `web/`.
+- Speelbaar op desktop en telefoon; de geïnstalleerde webapp opent in een normale appweergave en vraagt om portretstand.
+- Joystick, dash-, pauze- en opslagbediening voor touchscreens.
+- Drie lokale opslagplaatsen om een spel later verder te spelen.
+- Lokale top 10 met **100 punten per kristal**, inclusief kristallen uit eerder behaalde levels.
+- Het hoogste behaalde level staat bovenaan bij gelijke scores; daarna telt de snelste tijd.
+- Installeerbare PWA met offline terugval via een service worker.
 
-## Installeren als Android-app
+De ranglijst wordt alleen op het huidige apparaat opgeslagen. Scores worden niet online gedeeld.
 
-Open `https://rubenverriest.github.io/KoKo/web/` in Chrome. Als Chrome de app
-installatiegeschikt vindt, verschijnt **Installeer KoKo**; anders kun je
-Chrome-menu → **App installeren** gebruiken. Kies niet alleen **Toevoegen aan
-startscherm**, want dat kan een gewone snelkoppeling maken.
+## Besturing
 
-Na een update open je de website eerst online in Chrome en vernieuw je de
-pagina. Als de bestaande app nog oude bestanden start, verwijder die installatie
-en installeer KoKo opnieuw. Het wissen van sitegegevens is een laatste optie:
-dat verwijdert ook lokale spelopslagen en topscores.
+| Actie | Desktop | Telefoon |
+| --- | --- | --- |
+| Bewegen | `WASD` of pijltjestoetsen | Sleep de joystick |
+| Dash | `Spatie` | **DASH** |
+| Pauzeren / doorgaan | `P` of `Esc` | **PAUZE** |
+| Opslaan | `S` vanuit pauze | **OPSLAAN** |
+| Level afronden | `Enter` | Knop voor het volgende level |
+| Opnieuw beginnen na game over | `Enter` | Via **HOOFDMENU → NIEUW SPEL** |
+| Naar het hoofdmenu na game over | `Esc` of `M` | Knop **HOOFDMENU** |
+| Lokale topscores openen | `L` vanuit het menu | Tik op **LOKALE TOPSCORES** |
 
-## Gratis publiceren met Cloudflare Pages
+Druk in het hoofdmenu op `1`, `2` of `3` om een opslagplaats te laden.
 
-1. Maak een Cloudflare-account aan en open **Workers & Pages → Create application → Pages → Upload assets**.
-2. Upload de inhoud van deze `web`-map (of maak er een ZIP van). Op Windows kun je vanuit deze map uitvoeren:
+## Lokaal starten
+
+Vereist een recente browser. Voor de PWA- en service-workerfuncties moet de game via HTTPS of `localhost` worden geopend.
+
+1. Open een terminal in de repositorymap.
+2. Start een eenvoudige lokale webserver:
 
    ```powershell
-   Compress-Archive -Path .\* -DestinationPath ..\kosmische-koerier-web.zip -Force
+   py -m http.server 8000
    ```
 
-   Upload de ZIP met `index.html` op het hoogste niveau.
-3. Kies een projectnaam. Cloudflare geeft je een publieke `*.pages.dev`-URL.
-4. Er is geen build command nodig. Na wijzigingen upload je de map opnieuw.
+3. Open [http://localhost:8000](http://localhost:8000). De startpagina stuurt door naar `web/`.
 
-Zie ook de [officiële Cloudflare Pages direct-uploadhandleiding](https://developers.cloudflare.com/pages/get-started/direct-upload/).
+De repository bevat ook een zelfstandige Tkinter-versie:
 
-## Advertenties
+```powershell
+py kosmische_koerier.py
+```
 
-De advertentieruimte onder het spel is nu alleen een placeholder; er worden geen advertenties geladen en er is geen uitgegeven opbrengst. Voor Google AdSense:
+## Installeren op Android
 
-1. Vraag AdSense aan zodra de website online staat en voeg een domein toe dat je beheert. Google vereist dat je toegang hebt tot de HTML van de site om het eigenaarschap te verifiëren. Een eigen domein is daarom de aanbevolen stap; `pages.dev` is handig om de game eerst te testen.
-2. Wacht op goedkeuring en gebruik daarna uitsluitend de advertentiecode die AdSense voor jouw account genereert. Vervang de placeholder in `index.html` door de officiële code en plaats de verificatiecode waar AdSense die voorschrijft.
-3. Als je bezoekers in de EER, het VK of Zwitserland hebt, controleer de actuele toestemmingsvereisten. Google vereist voor gepersonaliseerde advertenties een door Google gecertificeerde CMP die met het IAB TCF integreert.
+1. Open **[KoKo in Chrome](https://rubenverriest.github.io/KoKo/web/)**.
+2. Tik op **Installeer KoKo** als Chrome de installatieknop toont. Je kunt ook **Chrome-menu → App installeren** kiezen.
+3. Start KoKo daarna via het app-icoon.
 
-De pagina `privacy.html` beschrijft de lokale spelopslag en de huidige advertentieplaceholder. Vul je contactgegevens in en werk deze pagina bij zodra je een advertentienetwerk kiest. Voor gepersonaliseerde advertenties voor bezoekers in de EER, het VK of Zwitserland vereist Google een gecertificeerde CMP die met het IAB TCF integreert.
+Kies bij voorkeur **App installeren**, niet alleen **Toevoegen aan startscherm**; dat laatste kan een gewone snelkoppeling maken. Na een update open je de website eerst online en vernieuw je de pagina. Als Chrome de nieuwe portretstand niet toepast, verwijder je de oude installatie en installeer je KoKo opnieuw.
 
-Goedkeuring of inkomsten zijn niet gegarandeerd; die hangen onder andere af van accountgoedkeuring, beleid, bezoekersaantallen en advertentievraag. Lees de [AdSense-voorwaarden voor deelname](https://support.google.com/adsense/answer/9724?hl=nl), de [site-eigendomseisen](https://support.google.com/adsense/answer/91205?hl=nl) en de [toestemmingsvereisten voor de EER, het VK en Zwitserland](https://support.google.com/adsense/answer/13554116?hl=nl).
+> Sitegegevens wissen is een laatste redmiddel: daarmee verwijder je ook de lokale opslagplaatsen en topscores.
+
+## Publiceren
+
+### GitHub Pages
+
+Stel GitHub Pages in via **Settings → Pages**:
+
+1. Kies **Deploy from a branch**.
+2. Selecteer de branch `main` en de map `/(root)`.
+3. Sla de instelling op en wacht tot GitHub Pages klaar is met publiceren.
+
+Het `index.html`-bestand in de repositoryroot stuurt bezoekers door naar `web/`. De gepubliceerde game staat op:
+
+**https://rubenverriest.github.io/KoKo/web/**
+
+### Cloudflare Pages
+
+De inhoud van `web/` kan rechtstreeks als statische site worden gepubliceerd. Er is geen build command nodig. Voor een ZIP-bestand voer je vanuit de repositoryroot uit:
+
+```powershell
+Compress-Archive -Path .\web\* -DestinationPath .\kosmische-koerier-web.zip -Force
+```
+
+Upload de inhoud van de ZIP met `index.html` op het hoogste niveau. Zie ook de [Cloudflare Pages-handleiding voor directe uploads](https://developers.cloudflare.com/pages/get-started/direct-upload/).
+
+## Projectstructuur
+
+```text
+KoKo/
+├── index.html                 # Doorstuurpagina naar de webgame
+├── kosmische_koerier.py       # Zelfstandige Tkinter-versie
+├── README.md
+└── web/
+    ├── index.html             # Gamepagina en PWA-installatieknop
+    ├── game.js                # Gameplay, bediening en lokale topscores
+    ├── styles.css             # Desktop-, mobiele en responsieve game-layout
+    ├── manifest.json          # Naam, startpagina en PWA-weergave
+    ├── pwa-bootstrap.js       # Installatieprompt en service-workerregistratie
+    ├── service-worker.js      # Netwerk-eerst laden met offline terugval
+    ├── privacy.html
+    └── icons/
+```
+
+## Privacy
+
+Spelopslagen en topscores worden lokaal in de browser bewaard. Er is geen online ranglijst, account of synchronisatie tussen apparaten. De advertentieruimte op de pagina is momenteel alleen een placeholder; er worden geen advertentiescripts geladen.
+
+Lees de [privacyverklaring](./web/privacy.html) voor meer informatie.

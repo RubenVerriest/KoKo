@@ -15,7 +15,8 @@ const DASH_COOLDOWN = 1.1;
 const DRONE_SPAWN_INTERVAL = 18;
 const DRONE_WARNING_TIME = 3;
 const SAVE_COUNT = 3;
-const LOCAL_LEADERBOARD_KEY = "kosmische-koerier-leaderboard";
+const LOCAL_LEADERBOARD_KEY = "kosmische-koerier-leaderboard-v2";
+const LEGACY_LOCAL_LEADERBOARD_KEY = "kosmische-koerier-leaderboard";
 const LOCAL_LEADERBOARD_SIZE = 10;
 const canvas = document.querySelector("#game");
 const context = canvas.getContext("2d");
@@ -625,11 +626,16 @@ function readSaveSlots() {
 function readLocalScores() {
   try {
     const raw = localStorage.getItem(LOCAL_LEADERBOARD_KEY);
-    if (!raw) {
+    const legacyRaw = raw === null
+      ? localStorage.getItem(LEGACY_LOCAL_LEADERBOARD_KEY)
+      : null;
+    const isLegacy = raw === null && legacyRaw !== null;
+    const storedRaw = raw === null ? legacyRaw : raw;
+    if (storedRaw === null) {
       localScores = [];
       return;
     }
-    const entries = JSON.parse(raw);
+    const entries = JSON.parse(storedRaw);
     if (!Array.isArray(entries) || entries.length > LOCAL_LEADERBOARD_SIZE) {
       throw new Error("De lokale ranglijst is ongeldig.");
     }
@@ -651,8 +657,24 @@ function readLocalScores() {
       ) {
         throw new Error("Een score in de lokale ranglijst is ongeldig.");
       }
-      return entry;
+      if (!isLegacy) {
+        return entry;
+      }
+      const crystalsFromPreviousLevels =
+        CRYSTAL_GOAL * entry.level * (entry.level - 1) / 2;
+      const crystals = crystalsFromPreviousLevels + entry.crystals;
+      return { ...entry, score: crystals * 100, crystals };
     });
+    localScores.sort((first, second) =>
+      second.score - first.score
+      || second.level - first.level
+      || first.duration - second.duration
+      || Date.parse(first.date) - Date.parse(second.date)
+    );
+    if (isLegacy) {
+      localStorage.setItem(LOCAL_LEADERBOARD_KEY, JSON.stringify(localScores));
+      localStorage.removeItem(LEGACY_LOCAL_LEADERBOARD_KEY);
+    }
   } catch (error) {
     localScores = [];
     notice = `Lokale ranglijst kon niet worden gelezen: ${error.message}`;
@@ -668,8 +690,10 @@ function recordLocalScore() {
   }
   state.resultRecorded = true;
   const completed = state.screen === "won";
-  const crystals = Math.min(state.collected, state.crystalGoal);
-  const score = state.level * 1000 + crystals * 100 + (completed ? 500 : 0);
+  const crystalsFromPreviousLevels =
+    CRYSTAL_GOAL * state.level * (state.level - 1) / 2;
+  const crystals = crystalsFromPreviousLevels + state.collected;
+  const score = crystals * 100;
   const entry = {
     score,
     level: state.level,
@@ -680,6 +704,7 @@ function recordLocalScore() {
   };
   const sortedScores = [...localScores, entry].sort((first, second) =>
     second.score - first.score
+    || second.level - first.level
     || first.duration - second.duration
     || Date.parse(first.date) - Date.parse(second.date)
   ).slice(0, LOCAL_LEADERBOARD_SIZE);
@@ -1073,12 +1098,12 @@ function drawLocalLeaderboard() {
   drawText("LOKALE TOPSCORES", WIDTH / 2, 106, 28, "#75e6d1", "700");
   drawText("Alleen opgeslagen op dit apparaat", WIDTH / 2, 148, 14, "#aab5d0");
   drawText(
-    "Score: 1000 per level + 100 per kristal + 500 voor een gehaald level",
+    "100 punten per kristal, ook uit eerder behaalde levels",
     WIDTH / 2, 178, 11, "#73809d",
   );
   const left = (WIDTH - MENU_BUTTON_WIDTH) / 2;
   const right = left + MENU_BUTTON_WIDTH;
-  drawText("RANG  •  LEVEL  •  KRISTALLEN  •  TIJD", left + 10, 214, 10, "#aab5d0", "700", "left");
+  drawText("RANG  •  LEVEL  •  TOTAAL KRISTALLEN  •  TIJD", left + 10, 214, 10, "#aab5d0", "700", "left");
   drawText("SCORE", right - 10, 214, 10, "#aab5d0", "700", "right");
 
   if (localScores.length === 0) {
