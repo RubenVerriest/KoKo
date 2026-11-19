@@ -40,11 +40,11 @@ const dashButton = document.querySelector(".dash-button");
 const pauseButton = document.querySelector("#pause-button");
 const saveButton = document.querySelector("#save-button");
 const nextLevelButton = document.querySelector("#next-level-button");
-if (
+const isInstalledApp =
   matchMedia("(display-mode: fullscreen)").matches
   || matchMedia("(display-mode: standalone)").matches
-  || window.navigator.standalone === true
-) {
+  || window.navigator.standalone === true;
+if (isInstalledApp) {
   document.documentElement.classList.add("installed-app");
 }
 const pressedKeys = new Set();
@@ -63,6 +63,29 @@ context.scale(pixelRatio, pixelRatio);
 let notice = "";
 let saveSlots = Array(SAVE_COUNT).fill(null);
 let localScores = [];
+
+if (isInstalledApp) {
+  const requestFullscreen = () => {
+    document.removeEventListener("pointerdown", requestFullscreen, true);
+    document.removeEventListener("keydown", requestFullscreen, true);
+    if (
+      matchMedia("(display-mode: fullscreen)").matches
+      || document.fullscreenElement
+    ) {
+      return;
+    }
+    const root = document.documentElement;
+    if (typeof root.requestFullscreen !== "function") {
+      console.error("Dit apparaat ondersteunt fullscreen niet.");
+      return;
+    }
+    root.requestFullscreen({ navigationUI: "hide" }).catch((error) => {
+      console.error("Fullscreen inschakelen is mislukt.", error);
+    });
+  };
+  document.addEventListener("pointerdown", requestFullscreen, true);
+  document.addEventListener("keydown", requestFullscreen, true);
+}
 
 function distance(x1, y1, x2, y2) {
   return Math.hypot(x2 - x1, y2 - y1);

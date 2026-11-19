@@ -74,10 +74,10 @@ py kosmische_koerier.py
 ## Installeren op Android
 
 1. Open **[Kosmische Koerier in Chrome](https://rubenverriest.github.io/KoKo/web/)**.
-2. Open het Chrome-menu en kies **App installeren** of **Toevoegen aan startscherm**.
+2. Open het Chrome-menu en kies **App installeren**. Gebruik niet alleen **Toevoegen aan startscherm**; dat kan een gewone snelkoppeling maken die niet fullscreen opent.
 3. Start **Koerier** daarna via het app-icoon.
 
-De oorspronkelijke appnaam is **Kosmische Koerier** (korte naam: **Koerier**). Na een update open je de website eerst online en vernieuw je de pagina. Als de nieuwe fullscreen-weergave niet wordt toegepast, verwijder je de oude installatie en installeer je de app opnieuw.
+De oorspronkelijke appnaam is **Kosmische Koerier** (korte naam: **Koerier**). Verwijder een bestaande installatie en installeer de app opnieuw om de fullscreen-weergave toe te passen. Na toekomstige updates open je de website eerst online en vernieuw je de pagina.
 
 > Sitegegevens wissen is een laatste redmiddel: daarmee verwijder je ook de lokale opslagplaatsen en topscores.
 
