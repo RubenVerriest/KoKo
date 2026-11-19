@@ -68,11 +68,11 @@ class GameState {
     this.crystals = [];
     this.drones = [];
     this.collected = 0;
+    this.totalCrystals = 0;
     this.health = 3;
     this.shieldCharges = 0;
     this.shieldPickup = null;
     this.elapsed = 0;
-    this.runTime = 0;
     this.pendingDroneSpawn = null;
     this.droneArrowSpawn = null;
     this.droneArrowTime = 0;
@@ -314,7 +314,6 @@ class GameState {
     }
     dt = Math.min(dt, 0.05);
     this.elapsed += dt;
-    this.runTime += dt;
     this.droneArrowTime = Math.max(0, this.droneArrowTime - dt);
     if (this.droneArrowTime === 0) {
       this.droneArrowSpawn = null;
@@ -361,6 +360,7 @@ class GameState {
       if (distance(...this.player, ...crystal) < 27) {
         this.crystals.splice(this.crystals.indexOf(crystal), 1);
         this.collected += 1;
+        this.totalCrystals += 1;
         this.spawnCrystals();
       }
     }
@@ -481,11 +481,11 @@ class GameState {
       crystals: this.crystals,
       drones: this.drones,
       collected: this.collected,
+      totalCrystals: this.totalCrystals,
       health: this.health,
       shieldCharges: this.shieldCharges,
       shieldPickup: this.shieldPickup,
       elapsed: this.elapsed,
-      runTime: this.runTime,
       invulnerable: this.invulnerable,
       dashCooldown: this.dashCooldown,
       dashTime: this.dashTime,
@@ -501,6 +501,15 @@ class GameState {
     }
     if (!Number.isInteger(data.collected) || data.collected < 0) {
       throw new Error("De opgeslagen kristaltelling is ongeldig.");
+    }
+    const minimumTotalCrystals =
+      CRYSTAL_GOAL * data.level * (data.level - 1) / 2 + data.collected;
+    const totalCrystals = data.totalCrystals ?? minimumTotalCrystals;
+    if (
+      !Number.isInteger(totalCrystals)
+      || totalCrystals < minimumTotalCrystals
+    ) {
+      throw new Error("Het totaal aantal opgeslagen kristallen is ongeldig.");
     }
     if (!Number.isInteger(data.health) || data.health < 1 || data.health > 3) {
       throw new Error("Het opgeslagen aantal levens is ongeldig.");
@@ -572,7 +581,6 @@ class GameState {
       return value;
     };
     const elapsed = timer("elapsed");
-    const runTime = data.runTime === undefined ? 0 : timer("runTime");
     const invulnerable = timer("invulnerable", 1.2);
     const dashCooldown = timer("dashCooldown", DASH_COOLDOWN);
     const dashTime = timer("dashTime", DASH_DURATION);
@@ -585,11 +593,11 @@ class GameState {
       crystals,
       drones,
       collected: data.collected,
+      totalCrystals,
       health: data.health,
       shieldCharges,
       shieldPickup,
       elapsed,
-      runTime,
       pendingDroneSpawn: null,
       droneArrowSpawn: null,
       droneArrowTime: 0,
@@ -639,6 +647,7 @@ function readLocalScores() {
     if (!Array.isArray(entries) || entries.length > LOCAL_LEADERBOARD_SIZE) {
       throw new Error("De lokale ranglijst is ongeldig.");
     }
+    let needsMigration = isLegacy;
     localScores = entries.map((entry) => {
       if (
         !entry
@@ -648,32 +657,40 @@ function readLocalScores() {
         || entry.level < 1
         || !Number.isInteger(entry.crystals)
         || entry.crystals < 0
-        || typeof entry.duration !== "number"
-        || !Number.isFinite(entry.duration)
-        || entry.duration < 0
         || typeof entry.completed !== "boolean"
-        || typeof entry.date !== "string"
-        || !Number.isFinite(Date.parse(entry.date))
       ) {
         throw new Error("Een score in de lokale ranglijst is ongeldig.");
       }
-      if (!isLegacy) {
-        return entry;
+      const alreadyUsesCrystalScoring = entry.score === entry.crystals * 100;
+      const crystals = alreadyUsesCrystalScoring
+        ? entry.crystals
+        : CRYSTAL_GOAL * entry.level * (entry.level - 1) / 2
+          + entry.crystals;
+      const score = crystals * 100;
+      if (
+        entry.duration !== undefined
+        || entry.date !== undefined
+        || entry.score !== score
+        || isLegacy
+      ) {
+        needsMigration = true;
       }
-      const crystalsFromPreviousLevels =
-        CRYSTAL_GOAL * entry.level * (entry.level - 1) / 2;
-      const crystals = crystalsFromPreviousLevels + entry.crystals;
-      return { ...entry, score: crystals * 100, crystals };
+      return {
+        score,
+        level: entry.level,
+        crystals,
+        completed: entry.completed,
+      };
     });
     localScores.sort((first, second) =>
       second.score - first.score
       || second.level - first.level
-      || first.duration - second.duration
-      || Date.parse(first.date) - Date.parse(second.date)
     );
-    if (isLegacy) {
+    if (needsMigration) {
       localStorage.setItem(LOCAL_LEADERBOARD_KEY, JSON.stringify(localScores));
-      localStorage.removeItem(LEGACY_LOCAL_LEADERBOARD_KEY);
+      if (isLegacy) {
+        localStorage.removeItem(LEGACY_LOCAL_LEADERBOARD_KEY);
+      }
     }
   } catch (error) {
     localScores = [];
@@ -690,23 +707,17 @@ function recordLocalScore() {
   }
   state.resultRecorded = true;
   const completed = state.screen === "won";
-  const crystalsFromPreviousLevels =
-    CRYSTAL_GOAL * state.level * (state.level - 1) / 2;
-  const crystals = crystalsFromPreviousLevels + state.collected;
+  const crystals = state.totalCrystals;
   const score = crystals * 100;
   const entry = {
     score,
     level: state.level,
     crystals,
-    duration: state.runTime,
     completed,
-    date: new Date().toISOString(),
   };
   const sortedScores = [...localScores, entry].sort((first, second) =>
     second.score - first.score
     || second.level - first.level
-    || first.duration - second.duration
-    || Date.parse(first.date) - Date.parse(second.date)
   ).slice(0, LOCAL_LEADERBOARD_SIZE);
   try {
     localStorage.setItem(LOCAL_LEADERBOARD_KEY, JSON.stringify(sortedScores));
@@ -1086,13 +1097,6 @@ function drawMenu() {
   }
 }
 
-function formatRunTime(seconds) {
-  const totalSeconds = Math.floor(seconds);
-  const minutes = Math.floor(totalSeconds / 60);
-  const remainder = String(totalSeconds % 60).padStart(2, "0");
-  return `${minutes}:${remainder}`;
-}
-
 function drawLocalLeaderboard() {
   drawStars();
   drawText("LOKALE TOPSCORES", WIDTH / 2, 106, 28, "#75e6d1", "700");
@@ -1103,7 +1107,7 @@ function drawLocalLeaderboard() {
   );
   const left = (WIDTH - MENU_BUTTON_WIDTH) / 2;
   const right = left + MENU_BUTTON_WIDTH;
-  drawText("RANG  •  LEVEL  •  TOTAAL KRISTALLEN  •  TIJD", left + 10, 214, 10, "#aab5d0", "700", "left");
+  drawText("RANG  •  LEVEL  •  TOTAAL KRISTALLEN", left + 10, 214, 10, "#aab5d0", "700", "left");
   drawText("SCORE", right - 10, 214, 10, "#aab5d0", "700", "right");
 
   if (localScores.length === 0) {
@@ -1113,7 +1117,7 @@ function drawLocalLeaderboard() {
       const y = 244 + index * 30;
       roundedRect(left, y - 12, MENU_BUTTON_WIDTH, 25, 5, "#10182b", "#293653");
       drawText(
-        `${String(index + 1).padStart(2, "0")}  •  LEVEL ${entry.level}  •  ${entry.crystals} KRISTALLEN  •  ${formatRunTime(entry.duration)}${entry.completed ? "  •  GEHAALD" : ""}`,
+        `${String(index + 1).padStart(2, "0")}  •  LEVEL ${entry.level}  •  ${entry.crystals} KRISTALLEN${entry.completed ? "  •  GEHAALD" : ""}`,
         left + 10, y, 10, index === 0 ? "#f2d47b" : "#edf0fa", "700", "left",
       );
       drawText(String(entry.score), right - 10, y, 11, "#75e6d1", "700", "right");
@@ -1500,3 +1504,11 @@ readSaveSlots();
 readLocalScores();
 resizeGameCanvas();
 requestAnimationFrame(frame);
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js").catch((error) => {
+      console.error("De offlinecache kon niet worden gestart.", error);
+    });
+  });
+}

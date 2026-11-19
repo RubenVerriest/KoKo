@@ -27,11 +27,11 @@ Verzamel genoeg kristallen om het portaal te activeren en ontwijk ondertussen de
 
 ### Functies
 
-- Speelbaar op desktop en telefoon; de geïnstalleerde webapp opent in een normale appweergave en vraagt om portretstand.
+- Speelbaar op desktop en telefoon; de geïnstalleerde webapp opent in een normale appweergave en volgt de schermoriëntatie van je toestel.
 - Joystick, dash-, pauze- en opslagbediening voor touchscreens.
 - Drie lokale opslagplaatsen om een spel later verder te spelen.
 - Lokale top 10 met **100 punten per kristal**, inclusief kristallen uit eerder behaalde levels.
-- Het hoogste behaalde level staat bovenaan bij gelijke scores; daarna telt de snelste tijd.
+- Bij gelijke scores staat het hoogste behaalde level bovenaan.
 - Installeerbare PWA met offline terugval via een service worker.
 
 De ranglijst wordt alleen op het huidige apparaat opgeslagen. Scores worden niet online gedeeld.
@@ -72,11 +72,11 @@ py kosmische_koerier.py
 
 ## Installeren op Android
 
-1. Open **[KoKo in Chrome](https://rubenverriest.github.io/KoKo/web/)**.
-2. Tik op **Installeer KoKo** als Chrome de installatieknop toont. Je kunt ook **Chrome-menu → App installeren** kiezen.
-3. Start KoKo daarna via het app-icoon.
+1. Open **[Kosmische Koerier in Chrome](https://rubenverriest.github.io/KoKo/web/)**.
+2. Open het Chrome-menu en kies **App installeren** of **Toevoegen aan startscherm**.
+3. Start **Koerier** daarna via het app-icoon.
 
-Kies bij voorkeur **App installeren**, niet alleen **Toevoegen aan startscherm**; dat laatste kan een gewone snelkoppeling maken. Na een update open je de website eerst online en vernieuw je de pagina. Als Chrome de nieuwe portretstand niet toepast, verwijder je de oude installatie en installeer je KoKo opnieuw.
+De oorspronkelijke appnaam is **Kosmische Koerier** (korte naam: **Koerier**). Na een update open je de website eerst online en vernieuw je de pagina.
 
 > Sitegegevens wissen is een laatste redmiddel: daarmee verwijder je ook de lokale opslagplaatsen en topscores.
 
@@ -94,16 +94,6 @@ Het `index.html`-bestand in de repositoryroot stuurt bezoekers door naar `web/`.
 
 **https://rubenverriest.github.io/KoKo/web/**
 
-### Cloudflare Pages
-
-De inhoud van `web/` kan rechtstreeks als statische site worden gepubliceerd. Er is geen build command nodig. Voor een ZIP-bestand voer je vanuit de repositoryroot uit:
-
-```powershell
-Compress-Archive -Path .\web\* -DestinationPath .\kosmische-koerier-web.zip -Force
-```
-
-Upload de inhoud van de ZIP met `index.html` op het hoogste niveau. Zie ook de [Cloudflare Pages-handleiding voor directe uploads](https://developers.cloudflare.com/pages/get-started/direct-upload/).
-
 ## Projectstructuur
 
 ```text
@@ -112,12 +102,11 @@ KoKo/
 ├── kosmische_koerier.py       # Zelfstandige Tkinter-versie
 ├── README.md
 └── web/
-    ├── index.html             # Gamepagina en PWA-installatieknop
+    ├── index.html             # Gamepagina
     ├── game.js                # Gameplay, bediening en lokale topscores
     ├── styles.css             # Desktop-, mobiele en responsieve game-layout
     ├── manifest.json          # Naam, startpagina en PWA-weergave
-    ├── pwa-bootstrap.js       # Installatieprompt en service-workerregistratie
-    ├── service-worker.js      # Netwerk-eerst laden met offline terugval
+    ├── service-worker.js      # Offline app-shell en netwerkterugval
     ├── privacy.html
     └── icons/
 ```

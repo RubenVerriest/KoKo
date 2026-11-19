@@ -1,12 +1,11 @@
 "use strict";
 
-const CACHE_NAME = "koko-pwa-v1";
+const CACHE_NAME = "kosmische-koerier-v2";
 const APP_SHELL = [
   "",
   "index.html",
   "styles.css",
   "game.js",
-  "pwa-bootstrap.js",
   "manifest.json",
   "privacy.html",
   "icons/icon.svg",
@@ -18,12 +17,7 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(
-        APP_SHELL.map((file) =>
-          new Request(
-            new URL(file, self.registration.scope),
-            { cache: "reload" },
-          )
-        ),
+        APP_SHELL.map((file) => new URL(file, self.registration.scope)),
       ))
       .then(() => self.skipWaiting()),
   );
@@ -35,11 +29,7 @@ self.addEventListener("activate", (event) => {
       .then((cacheNames) => Promise.all(
         cacheNames
           .filter((name) =>
-            (
-              name.startsWith("koko-pwa-")
-              || name.startsWith("kosmische-koerier-")
-            )
-            && name !== CACHE_NAME
+            name.startsWith("kosmische-koerier-") && name !== CACHE_NAME
           )
           .map((name) => caches.delete(name)),
       ))
@@ -56,26 +46,40 @@ self.addEventListener("fetch", (event) => {
 
   event.respondWith((async () => {
     const cache = await caches.open(CACHE_NAME);
-    try {
-      const response = await fetch(request, { cache: "no-cache" });
-      if (response.ok) {
-        await cache.put(request, response.clone());
-      }
-      return response;
-    } catch (error) {
-      const cachedResponse = await cache.match(request);
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      if (request.mode === "navigate") {
+    if (request.mode === "navigate") {
+      try {
+        const response = await fetch(request);
+        if (response.ok) {
+          await cache.put(request, response.clone());
+        }
+        return response;
+      } catch (error) {
+        const cachedPage = await cache.match(request);
+        if (cachedPage) {
+          return cachedPage;
+        }
         const fallback = await cache.match(
           new URL("index.html", self.registration.scope),
         );
         if (fallback) {
           return fallback;
         }
+        throw error;
+      }
+    }
+
+    const cachedResponse = await cache.match(request);
+    const networkResponse = fetch(request).then((response) => {
+      if (response.ok) {
+        cache.put(request, response.clone());
+      }
+      return response;
+    }).catch((error) => {
+      if (cachedResponse) {
+        return cachedResponse;
       }
       throw error;
-    }
+    });
+    return cachedResponse || networkResponse;
   })());
 });

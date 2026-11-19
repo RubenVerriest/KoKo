@@ -1,13 +1,13 @@
 {
   "id": "./",
-  "name": "KoKo",
-  "short_name": "KoKo",
+  "name": "Kosmische Koerier",
+  "short_name": "Koerier",
   "description": "Verzamel sterrenkristallen, ontwijk drones en vind de portal.",
   "lang": "nl",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "any",
   "background_color": "#080d1b",
   "theme_color": "#080d1b",
   "icons": [
